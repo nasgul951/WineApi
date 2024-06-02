@@ -3,7 +3,7 @@ public class Wine {
     public string? Varietal {get; set;}
     public string? Vineyard {get; set;}
     public string? Label {get; set;}
-    public int Vintage {get; set;}
+    public int? Vintage {get; set;}
     public string? Notes {get; set;}
     public int Count {get; set;}
 }
