@@ -18,7 +18,6 @@ public class PutBottle {
 }
 
 public class PatchBottle {
-    public int Id { get; set; }
     public int? WineId { get; set; }
     public int? StorageId { get; set; }
     public int? BinX { get; set; }

@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using WineApi.Data;
 using WineApi.Extensions;
+using WineApi.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Get Db Options
 var dbOptions = builder.Configuration.GetDbOptions();
@@ -16,6 +19,12 @@ builder.Services.AddDbContext<WineContext>(
         .LogTo(Console.WriteLine, LogLevel.Information)
 );
 
+builder.Services
+    .AddDataServices()
+    .AddHttpContextAccessor()
+    .AddAuthentication("Token")
+    .AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("Token", null);
+    
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
