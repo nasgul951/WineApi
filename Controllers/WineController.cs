@@ -1,9 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WineApi.Data;
-using WineApi.Extensions;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Authorization;
 using WineApi.Service;
 
@@ -24,9 +20,13 @@ public class WineController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<List<Wine>> Get(int? id, string? varietal, string? vineyard)
+    public async Task<PagedResponse<Wine>> Get([FromQuery] WineRequest req)
     {
-        return await _service.GetWines(id, varietal, vineyard).ToListAsync();
+        wineQuery  _service.GetWines(req)
+            .OrderByDescending(w => w.Vintage)
+            .Skip(req.Skip)
+            .Take(req.Take)
+            .ToListAsync();
     }
 
     [HttpPut]
@@ -35,9 +35,10 @@ public class WineController : ControllerBase
     [HttpPatch]
     public async Task<Wine> Patch(Wine model) => await _service.UpdateWine(model);
 
-#region Bottles
+    #region Bottles
     [HttpGet("{wineId:int}/bottles")]
-    public async Task<List<Bottle>> GetBottles(int wineId) {
+    public async Task<List<Bottle>> GetBottles(int wineId)
+    {
         return await _service.GetBottles(wineId, null).ToListAsync();
     }
 
@@ -46,15 +47,27 @@ public class WineController : ControllerBase
 
     [HttpPatch("bottle/{bottleId:int}")]
     public async Task<Bottle> PatchBottle(PatchBottle model, int bottleId) => await _service.UpdateBottle(bottleId, model);
-#endregion
+    #endregion
 
-#region Store
+    #region Store
     [HttpGet("store/{id}")]
-    public async Task<List<Store>> GetStore(int id) {
+    public async Task<List<Store>> GetStore(int id)
+    {
         return await _service.GetStoreResult(id).ToListAsync();
+    }
+    
+    [HttpGet("store/bin/{binId:int}")]
+    public async Task<List<StoreBottle>> GetBottlesByBin(int binId)
+    {
+        // binId is comprised of
+        // storeId * 1000 + binX * 100 + binY
+        var storeId = binId / 1000;
+        var binX = (binId % 1000) / 100;
+        var binY = (binId % 1000) % 100;
+
+        _logger.LogInformation("Retrieving bottles for storeId: {StoreId}, BinX: {BinX}, BinY: {BinY}", storeId, binX, binY);
+        return await _service.GetBottlesByStoreAndBin(storeId, binX, binY).ToListAsync();
     }
 
 #endregion
-
-
 }

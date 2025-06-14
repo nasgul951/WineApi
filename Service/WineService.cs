@@ -13,25 +13,20 @@ public class WineService
         _db = wineContext;
     }
 
-    public IQueryable<Wine> GetWines(int? id, string? varietal, string? vineyard) {
+    public IQueryable<Wine> GetWines(WineRequest req)
+    {
         return _db.Wines
-            .Where(w => w.Bottles.Any(b => b.Consumed == 0))
-            .IfThenWhere(id.HasValue, w => w.Wineid == id!.Value)
-            .IfThenWhere(!string.IsNullOrWhiteSpace(varietal), w => w.Varietal == varietal)
-            .IfThenWhere(!string.IsNullOrWhiteSpace(vineyard), w => w.Vineyard == vineyard)
-            .Select(w => new Wine(){
-                Id = w.Wineid,
-                Vineyard = w.Vineyard,
-                Varietal = w.Varietal,
-                Label = w.Label,
-                Vintage = w.Vintage ?? 0,
-                Notes = w.Notes,
-                Count = w.Bottles.Where(b => b.Consumed == 0).Count()
-            });
+            .Where(w => w.Bottles.Any(b => b.Consumed == (req.Consumed ? 1 : 0)))
+            .IfThenWhere(req.Id.HasValue, w => w.Wineid == req.Id!.Value)
+            .IfThenWhere(!string.IsNullOrWhiteSpace(req.Varietal), w => w.Varietal == req.Varietal)
+            .IfThenWhere(!string.IsNullOrWhiteSpace(req.Vineyard), w => w.Vineyard == req.Vineyard)
+            .ToWineModel();
     }
 
-    public async Task<Wine> AddWine(Wine model) {
-        var wine = new Data.Wine(){
+    public async Task<Wine> AddWine(Wine model)
+    {
+        var wine = new Data.Wine()
+        {
             Vineyard = model.Vineyard,
             Varietal = model.Varietal,
             Label = model.Label,
@@ -42,11 +37,14 @@ public class WineService
         _db.Wines.Add(wine);
         await _db.SaveChangesAsync();
 
-        var wines = GetWines(wine.Wineid, null, null);
+        var wines = _db.Wines
+            .Where(w => w.Wineid == wine.Wineid)
+            .ToWineModel();
         return await wines.FirstAsync();
     }
 
-    public async Task<Wine> UpdateWine(Wine model){
+    public async Task<Wine> UpdateWine(Wine model)
+    {
         var wine = _db.Wines.First(w => w.Wineid == model.Id);
 
         if (string.IsNullOrWhiteSpace(model.Varietal))
@@ -66,9 +64,12 @@ public class WineService
 
         await _db.SaveChangesAsync();
 
-        return await GetWines(model.Id, null, null).FirstAsync();
+        var wines = _db.Wines
+            .Where(w => w.Wineid == wine.Wineid)
+            .ToWineModel();
+        return await wines.FirstAsync();
     }
-    
+
     public IQueryable<Bottle> GetBottles(int? wineId, int? binId)
     {
         return _db.Bottles
@@ -78,8 +79,10 @@ public class WineService
             .ToBottleModel();
     }
 
-    public async Task<Bottle> AddBottle(PutBottle model) {
-        var bottle = new Data.Bottle() {
+    public async Task<Bottle> AddBottle(PutBottle model)
+    {
+        var bottle = new Data.Bottle()
+        {
             Wineid = model.WineId,
             Storageid = model.StorageId,
             BinX = model.BinX,
@@ -96,7 +99,8 @@ public class WineService
             .FirstAsync();
     }
 
-    public async Task<Bottle> UpdateBottle(int id, PatchBottle model) {
+    public async Task<Bottle> UpdateBottle(int id, PatchBottle model)
+    {
         var bottle = await _db.Bottles.FirstAsync(b => b.Bottleid == id);
 
         if (model.WineId.HasValue)
@@ -111,7 +115,7 @@ public class WineService
             bottle.Depth = model.Depth.Value;
         if (model.Consumed.HasValue)
             bottle.Consumed = (sbyte)(model.Consumed.Value ? 1 : 0);
-        
+
         await _db.SaveChangesAsync();
 
         return await _db.Bottles
@@ -119,7 +123,7 @@ public class WineService
             .ToBottleModel()
             .FirstAsync();
     }
-    
+
     public IQueryable<Store> GetStoreResult(int storeId)
     {
         return _db.Bottles
@@ -134,5 +138,25 @@ public class WineService
             })
             .OrderBy(s => s.BinY)
             .ThenBy(s => s.BinX);
+    }
+
+    public IQueryable<StoreBottle> GetBottlesByStoreAndBin(int storeId, int binX, int binY)
+    {
+        return _db.Bottles
+            .Where(b => b.Consumed == 0)
+            .Where(b => b.Storageid == storeId)
+            .Where(b => b.BinX == binX)
+            .Where(b => b.BinY == binY)
+            .Select(b => new StoreBottle()
+            {
+                BottleId = b.Bottleid,
+                WineId = b.Wineid,
+                Vineyard = b.Wine.Vineyard,
+                Label = b.Wine.Label,
+                Varietal = b.Wine.Varietal,
+                Vintage = b.Wine.Vintage,
+                Depth = b.Depth,
+                CreatedDate = b.CreatedDate
+            });
     }
 }

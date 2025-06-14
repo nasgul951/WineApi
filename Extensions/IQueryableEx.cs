@@ -27,5 +27,20 @@ namespace WineApi.Extensions
                     CreatedDate = b.CreatedDate
                 });
         }
+
+        public static IQueryable<Wine> ToWineModel(this IQueryable<Data.Wine> source)
+        {
+            return source
+                .Select(w => new Wine()
+                {
+                    Id = w.Wineid,
+                    Varietal = w.Varietal,
+                    Vineyard = w.Vineyard,
+                    Label = w.Label,
+                    Vintage = w.Vintage,
+                    Notes = w.Notes,
+                    Count = w.Bottles.Count(b => b.Consumed == 0)
+                });
+        }
     }
 }

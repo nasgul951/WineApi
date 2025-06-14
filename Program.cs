@@ -24,8 +24,11 @@ builder.Services
     .AddHttpContextAccessor()
     .AddAuthentication("Token")
     .AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("Token", null);
-    
+
 builder.Services.AddControllers();
+
+builder.Services.AddCorsPolicy(builder.Configuration);
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -41,6 +44,7 @@ if (app.Environment.IsDevelopment())
 
 //app.UseHttpsRedirection();
 
+app.UseCors("CorsPolicy");
 app.UseAuthorization();
 
 app.MapControllers();

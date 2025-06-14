@@ -11,10 +11,8 @@ public class Store {
 }
 
 public class StoreBottle {
-    [JsonPropertyName("bottleid")]
     public int BottleId { get; set; }
     
-    [JsonPropertyName("wineid")]
     public int WineId { get; set; }
     
     public string? Vineyard { get; set; }
