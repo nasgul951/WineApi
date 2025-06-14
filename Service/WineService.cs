@@ -43,9 +43,9 @@ public class WineService
         return await wines.FirstAsync();
     }
 
-    public async Task<Wine> UpdateWine(Wine model)
+    public async Task<Wine> UpdateWine(int id, WinePatchRequest model)
     {
-        var wine = _db.Wines.First(w => w.Wineid == model.Id);
+        var wine = _db.Wines.First(w => w.Wineid == id);
 
         if (string.IsNullOrWhiteSpace(model.Varietal))
             wine.Varietal = model.Varietal;

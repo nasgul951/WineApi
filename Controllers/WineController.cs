@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using WineApi.Service;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace WineApi.Controllers;
 
@@ -19,33 +20,43 @@ public class WineController : ControllerBase
         _service = wineService;
     }
 
-    [HttpGet]
-    public async Task<PagedResponse<Wine>> Get([FromQuery] WineRequest req)
+    [HttpGet("query")]
+    public async Task<IActionResult> Get([FromQuery] PagedRequest<WineRequest, Wine> req)
     {
-        wineQuery  _service.GetWines(req)
-            .OrderByDescending(w => w.Vintage)
-            .Skip(req.Skip)
-            .Take(req.Take)
-            .ToListAsync();
+        var q = _service.GetWines(req.FilterObject);
+        var response = await req.BuildResponseAsync(q);
+        return Ok(response);
     }
 
-    [HttpPut]
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetWine(int id)
+    {
+        var wine = await _service.GetWines(new WineRequest { Id = id })
+            .FirstOrDefaultAsync();
+        if (wine == null)
+        {
+            return NotFound();
+        }
+        return Ok(wine);
+    }
+    
+    [HttpPost]
     public async Task<Wine> Put(Wine model) => await _service.AddWine(model);
 
-    [HttpPatch]
-    public async Task<Wine> Patch(Wine model) => await _service.UpdateWine(model);
+    [HttpPatch("{id:int}")]
+    public async Task<Wine> Patch(int id, WinePatchRequest model) => await _service.UpdateWine(id, model);
 
     #region Bottles
     [HttpGet("{wineId:int}/bottles")]
-    public async Task<List<Bottle>> GetBottles(int wineId)
+    public async Task<List<Bottle>> GetBottlesForWine(int wineId)
     {
         return await _service.GetBottles(wineId, null).ToListAsync();
     }
 
-    [HttpPut("bottles")]
-    public async Task<Bottle> PutBottle(PutBottle model) => await _service.AddBottle(model);
+    [HttpPost("bottles")]
+    public async Task<Bottle> AddBottle(PutBottle model) => await _service.AddBottle(model);
 
-    [HttpPatch("bottle/{bottleId:int}")]
+    [HttpPatch("bottles/{bottleId:int}")]
     public async Task<Bottle> PatchBottle(PatchBottle model, int bottleId) => await _service.UpdateBottle(bottleId, model);
     #endregion
 
