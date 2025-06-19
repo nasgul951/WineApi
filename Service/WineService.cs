@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WineApi.Data;
 using WineApi.Extensions;
+using WineApi.Model.Attributes.Varietal;
 
 namespace WineApi.Service;
 
@@ -21,6 +22,19 @@ public class WineService
             .IfThenWhere(!string.IsNullOrWhiteSpace(req.Varietal), w => w.Varietal == req.Varietal)
             .IfThenWhere(!string.IsNullOrWhiteSpace(req.Vineyard), w => w.Vineyard == req.Vineyard)
             .ToWineModel();
+    }
+
+    public IQueryable<Varietal> GetVarietals()
+    {
+        return _db.Wines
+            .Where(w => w.Bottles.Any(b => b.Consumed == 0))
+            .GroupBy(w => w.Varietal)
+            .Select(g => new Varietal
+            {
+                Name = g.Key!,
+                Count = g.Count()
+            })
+            .OrderBy(v => v.Name);
     }
 
     public async Task<Wine> AddWine(Wine model)
@@ -46,17 +60,19 @@ public class WineService
     public async Task<Wine> UpdateWine(int id, WinePatchRequest model)
     {
         var wine = _db.Wines.First(w => w.Wineid == id);
+        if (wine == null)
+            throw new Exception($"Wine with id {id} not found."); 
 
-        if (string.IsNullOrWhiteSpace(model.Varietal))
+        if (!string.IsNullOrWhiteSpace(model.Varietal))
             wine.Varietal = model.Varietal;
 
-        if (string.IsNullOrWhiteSpace(model.Vineyard))
+        if (!string.IsNullOrWhiteSpace(model.Vineyard))
             wine.Vineyard = model.Vineyard;
 
-        if (string.IsNullOrWhiteSpace(model.Label))
+        if (!string.IsNullOrWhiteSpace(model.Label))
             wine.Label = model.Label;
 
-        if (string.IsNullOrWhiteSpace(model.Notes))
+        if (!string.IsNullOrWhiteSpace(model.Notes))
             wine.Notes = model.Notes;
 
         if (model.Vintage.HasValue)

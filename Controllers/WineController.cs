@@ -39,13 +39,21 @@ public class WineController : ControllerBase
         }
         return Ok(wine);
     }
-    
+
     [HttpPost]
     public async Task<Wine> Put(Wine model) => await _service.AddWine(model);
 
     [HttpPatch("{id:int}")]
     public async Task<Wine> Patch(int id, WinePatchRequest model) => await _service.UpdateWine(id, model);
 
+    [HttpGet("varietals")]  
+    public async Task<IActionResult> GetVariatals([FromQuery] WineRequest req)
+    {
+        var query = _service.GetVarietals();
+        var result = await query.ToListAsync();
+        return Ok(result);
+    }
+    
     #region Bottles
     [HttpGet("{wineId:int}/bottles")]
     public async Task<List<Bottle>> GetBottlesForWine(int wineId)
