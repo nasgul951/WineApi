@@ -32,8 +32,8 @@ public class WineRequest
     [JsonPropertyName("vineyard")]
     public string? Vineyard { get; set; }
 
-    [JsonPropertyName("consumed")]
-    public bool Consumed { get; set; } = false;
+    [JsonPropertyName("showAll")]
+    public bool ShowAll { get; set; } = false;
 }
 
 public class WinePatchRequest

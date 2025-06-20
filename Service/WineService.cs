@@ -17,7 +17,7 @@ public class WineService
     public IQueryable<Wine> GetWines(WineRequest req)
     {
         return _db.Wines
-            .Where(w => w.Bottles.Any(b => b.Consumed == (req.Consumed ? 1 : 0)))
+            .IfThenWhere(!req.ShowAll, w => w.Bottles.Any(b => b.Consumed == 0))
             .IfThenWhere(req.Id.HasValue, w => w.Wineid == req.Id!.Value)
             .IfThenWhere(!string.IsNullOrWhiteSpace(req.Varietal), w => w.Varietal == req.Varietal)
             .IfThenWhere(!string.IsNullOrWhiteSpace(req.Vineyard), w => w.Vineyard == req.Vineyard)

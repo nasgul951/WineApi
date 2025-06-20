@@ -31,8 +31,12 @@ public class WineController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetWine(int id)
     {
-        var wine = await _service.GetWines(new WineRequest { Id = id })
-            .FirstOrDefaultAsync();
+        var wine = await _service.GetWines(new WineRequest
+        {
+            Id = id,
+            ShowAll = true
+        }).FirstOrDefaultAsync();
+
         if (wine == null)
         {
             return NotFound();
