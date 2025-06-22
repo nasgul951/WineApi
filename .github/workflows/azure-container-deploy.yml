@@ -23,8 +23,9 @@ jobs:
 
     - name: Build and push Docker image
       run: |
-        az acr login --name wineapi-b4ejd7fde3e3e6hh
-        docker build -t wineapi-b4ejd7fde3e3e6hh.azurecr.io/wineapi:${{ github.sha }} .
+        az acr login --name WineApi
+        docker build -t wineapi:latest .
+        docker tag wineapi:latest wineapi-b4ejd7fde3e3e6hh.azurecr.io/wineapi:${{ github.sha }}
         docker push wineapi-b4ejd7fde3e3e6hh.azurecr.io/wineapi:${{ github.sha }}
 
     - name: Deploy to Azure Container Apps
