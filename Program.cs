@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Get Db Options
 var dbOptions = builder.Configuration.GetDbOptions();
-var connString = $"server={dbOptions.Server};user={dbOptions.User};password={dbOptions.Password};database={dbOptions.Database}";
+var connString = $"server={dbOptions.Server};user={dbOptions.User};password={dbOptions.Password};database={dbOptions.Database};SslMode=Required";
 var serverVersion = ServerVersion.AutoDetect(connString);
 
 // Add services to the container.
@@ -18,6 +18,8 @@ builder.Services.AddDbContext<WineContext>(
         .UseMySql(connString, serverVersion)
         .LogTo(Console.WriteLine, LogLevel.Information)
 );
+
+builder.Services.AddHealthChecks();
 
 builder.Services
     .AddDataServices()
@@ -43,7 +45,7 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
-
+app.MapHealthChecks("/");
 app.UseCors("CorsPolicy");
 app.UseAuthorization();
 
