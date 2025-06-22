@@ -25,6 +25,8 @@ jobs:
 
     - name: Build and push Docker image
       run: |
+        az account show
+        az acr list --output table
         az acr login --name WineApi
         docker build -t wineapi:latest .
         docker tag wineapi:latest wineapi-b4ejd7fde3e3e6hh.azurecr.io/wineapi:${{ github.sha }}
