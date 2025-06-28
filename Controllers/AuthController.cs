@@ -1,8 +1,6 @@
 using System.Security.Claims;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration.UserSecrets;
 using WineApi.Exceptions;
 using WineApi.Extensions;
 using WineApi.Service;
