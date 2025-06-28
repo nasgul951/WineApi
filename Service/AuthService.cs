@@ -1,5 +1,7 @@
+using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using WineApi.Data;
+using WineApi.Exceptions;
 
 namespace WineApi.Service;
 
@@ -45,6 +47,21 @@ public class AuthService
         return user;
     }
 
+    public async Task ClearUserToken(int userId)
+    {
+        var user = await _db.Users
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+        {
+            throw new InvalidRequestException(nameof(userId));
+        }
+
+        user.Key = null;
+        user.KeyExpires = null;
+        await _db.SaveChangesAsync();
+    }
+    
     private async Task GenerateUserKey(User user)
     {
         var guid = Guid.NewGuid();

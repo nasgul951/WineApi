@@ -144,13 +144,14 @@ public class WineService
     {
         return _db.Bottles
             .Where(b => b.Storageid == storeId)
+            .Where(b => b.Consumed == 0)
             .GroupBy(b => new { b.BinY, b.BinX })
-            .Select(b => new Store()
+            .Select(g => new Store()
             {
-                Id = storeId * 1000 + (b.Key.BinX * 100) + b.Key.BinY,
-                BinX = b.Key.BinX,
-                BinY = b.Key.BinY,
-                Count = b.Count()
+                Id = storeId * 1000 + (g.Key.BinX * 100) + g.Key.BinY,
+                BinX = g.Key.BinX,
+                BinY = g.Key.BinY,
+                Count = g.Count()
             })
             .OrderBy(s => s.BinY)
             .ThenBy(s => s.BinX);
@@ -161,8 +162,8 @@ public class WineService
         return _db.Bottles
             .Where(b => b.Consumed == 0)
             .Where(b => b.Storageid == storeId)
-            .Where(b => b.BinX == binX)
             .Where(b => b.BinY == binY)
+            .IfThenWhere(binX > 0, b => b.BinX == binX)
             .Select(b => new StoreBottle()
             {
                 BottleId = b.Bottleid,
@@ -171,6 +172,8 @@ public class WineService
                 Label = b.Wine.Label,
                 Varietal = b.Wine.Varietal,
                 Vintage = b.Wine.Vintage,
+                BinX = b.BinX,
+                BinY = b.BinY,
                 Depth = b.Depth,
                 CreatedDate = b.CreatedDate
             });
