@@ -1,6 +1,10 @@
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration.UserSecrets;
+using WineApi.Exceptions;
+using WineApi.Extensions;
 using WineApi.Service;
 
 namespace WineApi.Controllers;
@@ -50,5 +54,29 @@ public class AuthController : ControllerBase
             UserId = principal.FindFirstValue(ClaimTypes.NameIdentifier),
             UserName = principal.FindFirstValue(ClaimTypes.Name)
         });
+    }
+
+    [Authorize(AuthenticationSchemes = "Token")]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        try
+        {
+            var principal = HttpContext.User;
+            var userId = principal.FindFirstValueAsInt(ClaimTypes.NameIdentifier);
+            await _authService.ClearUserToken(userId);
+
+            return Ok("Logged out");
+        }
+        catch (InvalidRequestException ex)
+        {
+            _logger.LogError(ex.Message);
+            return StatusCode(400, "Bad request");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during logout.");
+            return StatusCode(500, "Internal server error");
+        }
     }
 }
