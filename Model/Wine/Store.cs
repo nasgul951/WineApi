@@ -23,6 +23,10 @@ public class StoreBottle {
 
     public int? Vintage { get; set; }
 
+    public int? BinX { get; set; }
+
+    public int? BinY { get; set; }
+
     public int Depth { get; set; }
 
     public DateTime? CreatedDate { get; set; }

@@ -162,8 +162,8 @@ public class WineService
         return _db.Bottles
             .Where(b => b.Consumed == 0)
             .Where(b => b.Storageid == storeId)
-            .Where(b => b.BinX == binX)
             .Where(b => b.BinY == binY)
+            .IfThenWhere(binX > 0, b => b.BinX == binX)
             .Select(b => new StoreBottle()
             {
                 BottleId = b.Bottleid,
@@ -172,6 +172,8 @@ public class WineService
                 Label = b.Wine.Label,
                 Varietal = b.Wine.Varietal,
                 Vintage = b.Wine.Vintage,
+                BinX = b.BinX,
+                BinY = b.BinY,
                 Depth = b.Depth,
                 CreatedDate = b.CreatedDate
             });
