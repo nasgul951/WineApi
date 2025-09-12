@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WineApi.Data;
 using WineApi.Extensions;
 using WineApi.Model.Attributes.Varietal;
+using WineApi.Model.Wine;
 
 namespace WineApi.Service;
 
@@ -30,6 +31,20 @@ public class WineService
             .Where(w => w.Bottles.Any(b => b.Consumed == 0))
             .GroupBy(w => w.Varietal)
             .Select(g => new Varietal
+            {
+                Name = g.Key!,
+                Count = g.Count()
+            })
+            .OrderBy(v => v.Name);
+    }
+
+    public IQueryable<Vineyard> GetVineyards(string? like)
+    {
+        return _db.Wines
+            .Where(w => w.Bottles.Any(b => b.Consumed == 0))
+            .IfThenWhere(!string.IsNullOrWhiteSpace(like), w => EF.Functions.Like(w.Vineyard, $"%{like}%"))
+            .GroupBy(w => w.Vineyard)
+            .Select(g => new Vineyard
             {
                 Name = g.Key!,
                 Count = g.Count()
@@ -142,6 +157,7 @@ public class WineService
 
     public IQueryable<Store> GetStoreResult(int storeId)
     {
+        Console.WriteLine($"Getting store result for storeId: {storeId}");
         return _db.Bottles
             .Where(b => b.Storageid == storeId)
             .Where(b => b.Consumed == 0)
