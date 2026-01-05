@@ -34,10 +34,6 @@ public partial class WineContext : DbContext
         {
             entity.HasKey(e => e.Bottleid).HasName("PRIMARY");
 
-            entity
-                .ToTable("tblbottles")
-                .UseCollation("latin1_swedish_ci");
-
             entity.HasIndex(e => e.Storageid, "IX_tblBottles_storageid");
 
             entity.HasIndex(e => e.Wineid, "IX_tblBottles_wineid");
@@ -66,21 +62,19 @@ public partial class WineContext : DbContext
             entity.HasOne(d => d.Storage).WithMany(p => p.Bottles)
                 .HasForeignKey(d => d.Storageid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("0_19");
+                .HasConstraintName("fk_bottles_storage");
 
             entity.HasOne(d => d.Wine).WithMany(p => p.Bottles)
                 .HasForeignKey(d => d.Wineid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("0_17");
+                .HasConstraintName("fk_bottles_wine");
         });
 
         modelBuilder.Entity<Storage>(entity =>
         {
-            entity.HasKey(e => e.Storageid).HasName("PRIMARY");
+            entity.ToTable("storage");
 
-            entity
-                .ToTable("tblstorage")
-                .UseCollation("latin1_swedish_ci");
+            entity.HasKey(e => e.Storageid).HasName("PRIMARY");
 
             entity.Property(e => e.Storageid).HasColumnName("storageid");
             entity.Property(e => e.StorageAddr1)
@@ -110,10 +104,6 @@ public partial class WineContext : DbContext
         modelBuilder.Entity<Wine>(entity =>
         {
             entity.HasKey(e => e.Wineid).HasName("PRIMARY");
-
-            entity
-                .ToTable("tblwinelist")
-                .UseCollation("latin1_swedish_ci");
 
             entity.Property(e => e.Wineid).HasColumnName("wineid");
             entity.Property(e => e.CreatedDate)
@@ -171,6 +161,12 @@ public partial class WineContext : DbContext
         });
 
         OnModelCreatingPartial(modelBuilder);
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder
+            .UseSnakeCaseNamingConvention();
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
