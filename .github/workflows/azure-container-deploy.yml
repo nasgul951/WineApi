@@ -23,14 +23,10 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Debug ACR visibility
-      run: |
-        az account show
-        az resource list --resource-type "Microsoft.ContainerRegistry/registries" --output table
-
     - name: Build and push Docker image
       run: |
         az acr login --name WineApi
+        cd src/WineApi
         docker build -t wineapi:latest .
         docker tag wineapi:latest wineapi-b4ejd7fde3e3e6hh.azurecr.io/wineapi:${{ github.sha }}
         docker push wineapi-b4ejd7fde3e3e6hh.azurecr.io/wineapi:${{ github.sha }}
