@@ -2,10 +2,11 @@ using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using WineApi.Data;
 using WineApi.Exceptions;
+using WineApi.Helpers;
 
 namespace WineApi.Service;
 
-public class AuthService
+public class AuthService : IAuthService
 {
     private readonly WineContext _db;
 
@@ -24,7 +25,7 @@ public class AuthService
             return null; // User not found
         }
 
-        var hashedPassword = HashPassword(password, user.Salt);
+        var hashedPassword = CryptoHelper.HashPassword(password, user.Salt);
         if (hashedPassword != user.Password)
         {
             return null; // Password does not match
@@ -69,16 +70,5 @@ public class AuthService
         user.KeyExpires = DateTime.UtcNow.AddDays(7); // Key valid for 7 days
         user.LastOn = DateTime.UtcNow.ToString("o"); // Update last login time
         await _db.SaveChangesAsync();
-    }
-
-    private string HashPassword(string password, string salt)
-    {
-        // Calculate the sha256 hash of the password with the salt
-        var saltedPassword = salt + password;
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(saltedPassword));
- 
-        // Return the hash as Hexadecimal string
-        return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
     }
 }

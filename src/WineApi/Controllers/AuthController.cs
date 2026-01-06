@@ -11,10 +11,10 @@ namespace WineApi.Controllers;
 [Route("[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly AuthService _authService;
+    private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(AuthService authService, ILogger<AuthController> logger)
+    public AuthController(IAuthService authService, ILogger<AuthController> logger)
     {
         _logger = logger;
         _authService = authService;

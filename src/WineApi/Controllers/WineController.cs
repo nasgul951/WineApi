@@ -12,9 +12,9 @@ namespace WineApi.Controllers;
 public class WineController : ControllerBase
 {
     private readonly ILogger<WineController> _logger;
-    private readonly WineService _service;
+    private readonly IWineService _service;
 
-    public WineController(ILogger<WineController> logger, WineService wineService)
+    public WineController(ILogger<WineController> logger, IWineService wineService)
     {
         _logger = logger;
         _service = wineService;

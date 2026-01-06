@@ -7,8 +7,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDataServices(this IServiceCollection services)
     {
         // Register services
-        services.AddScoped<AuthService>();
-        services.AddScoped<WineService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IWineService, WineService>();
 
         return services;
     }
