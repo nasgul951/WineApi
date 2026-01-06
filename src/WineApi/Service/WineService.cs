@@ -6,7 +6,7 @@ using WineApi.Model.Wine;
 
 namespace WineApi.Service;
 
-public class WineService
+public class WineService : IWineService
 {
     private readonly WineContext _db;
 

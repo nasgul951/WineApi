@@ -8,13 +8,13 @@ namespace WineApi.Helpers;
 
 public class TokenAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
-    private readonly AuthService _authService;
+    private readonly IAuthService _authService;
 
     public TokenAuthenticationHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        AuthService authService)
+        IAuthService authService)
         : base(options, logger, encoder)
     {
         _authService = authService;
