@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WineApi.Data;
 
@@ -11,9 +12,11 @@ using WineApi.Data;
 namespace WineApi.Migrations
 {
     [DbContext(typeof(WineContext))]
-    partial class WineContextModelSnapshot : ModelSnapshot
+    [Migration("20260112144015_UserIsAdmin")]
+    partial class UserIsAdmin
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

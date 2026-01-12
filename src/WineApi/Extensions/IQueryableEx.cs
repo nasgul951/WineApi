@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using WineApi.Model.Auth;
 
 namespace WineApi.Extensions
 {
@@ -40,6 +41,18 @@ namespace WineApi.Extensions
                     Vintage = w.Vintage,
                     Notes = w.Notes,
                     Count = w.Bottles.Count(b => b.Consumed == 0)
+                });
+        }
+
+        public static IQueryable<UserDto> ToUserDto(this IQueryable<Data.User> source)
+        {
+            return source
+                .Select(u => new UserDto()
+                {
+                    Id = u.Id,
+                    Username = u.Username,
+                    LastOn = u.LastOn,
+                    IsAdmin = u.IsAdmin,
                 });
         }
     }

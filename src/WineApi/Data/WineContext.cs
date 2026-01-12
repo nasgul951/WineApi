@@ -158,6 +158,8 @@ public partial class WineContext : DbContext
             entity.Property(e => e.Username)
                 .HasMaxLength(45)
                 .HasColumnName("username");
+            entity.Property(e => e.IsAdmin)
+                .HasDefaultValue(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

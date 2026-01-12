@@ -18,4 +18,6 @@ public partial class User
     public string Salt { get; set; } = null!;
 
     public string? LastOn { get; set; }
+
+    public bool IsAdmin { get; set; }
 }
