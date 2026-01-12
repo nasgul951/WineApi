@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using WineApi.Model.Auth;
+using WineApi.Model.User;
 
 namespace WineApi.Extensions
 {

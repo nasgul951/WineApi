@@ -1,4 +1,4 @@
-﻿namespace WineApi.Model.Auth
+﻿namespace WineApi.Model.User
 {
     public class UserDto
     {

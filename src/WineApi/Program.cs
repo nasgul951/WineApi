@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using WineApi.Data;
 using WineApi.Extensions;
 using WineApi.Helpers;
+using WineApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +44,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 //app.UseHttpsRedirection();
 app.MapHealthChecks("/");
