@@ -23,4 +23,5 @@ public static class CryptoHelper
         // Return the hash as a lowercase hexadecimal string
         return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
     }
+
 }
