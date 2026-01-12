@@ -24,4 +24,15 @@ public static class CryptoHelper
         return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
     }
 
+    /// <summary>
+    /// Generates a cryptographically secure random salt.
+    /// </summary>
+    /// <param name="size">The size of the salt in bytes</param>
+    public static string GenerateSalt(int size)
+    {
+        var salt = new byte[size];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(salt);
+        return Convert.ToBase64String(salt);
+    }
 }
