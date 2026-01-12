@@ -15,7 +15,7 @@ namespace WineApi.Service
             _db = wineContext;
         }
 
-        public async Task<IQueryable<UserDto>> GetByFilter(UserRequest filter)
+        public IQueryable<UserDto> GetByFilter(UserRequest filter)
         {
             var users = _db.Users
                 .IfThenWhere(!string.IsNullOrEmpty(filter.Username), u => EF.Functions.Like(u.Username, $"%{filter.Username}%"))
@@ -41,10 +41,23 @@ namespace WineApi.Service
 
         public async Task<UserDto?> AddUser(AddUpdateUser addUser)
         {
+            // Ensure username was provided
+            if (string.IsNullOrWhiteSpace(addUser.Username))
+            {
+                throw new InvalidRequestException("username");
+            }
+
+            // Ensure unique username
             var userExists = await _db.Users.AnyAsync(u => u.Username == addUser.Username);
             if (userExists)
             {
                 throw new ConflictException("Username");
+            }
+
+            // Use a random password if not specified
+            if (string.IsNullOrWhiteSpace(addUser.Password))
+            {
+                addUser.Password = CryptoHelper.GenerateSalt(16);
             }
 
             var salt = CryptoHelper.GenerateSalt(16);
@@ -53,7 +66,7 @@ namespace WineApi.Service
             var user = new User
             {
                 Username = addUser.Username,
-                IsAdmin = addUser.IsAdmin,
+                IsAdmin = addUser.IsAdmin ?? false,
                 Salt = salt,
                 Password = hashedPassword
             };
@@ -82,10 +95,21 @@ namespace WineApi.Service
                 throw new ConflictException("Username");
             }
 
-            var hashedPassword = CryptoHelper.HashPassword(updateUser.Password, user.Salt);
-            user.Username = updateUser.Username;
-            user.Password = hashedPassword;
-            user.IsAdmin = updateUser.IsAdmin;
+            if (!string.IsNullOrWhiteSpace(updateUser.Username))
+            {
+                user.Username = updateUser.Username;
+            }
+
+            if (!string.IsNullOrWhiteSpace(updateUser.Password))
+            {
+                var hashedPassword = CryptoHelper.HashPassword(updateUser.Password, user.Salt);
+                user.Password = hashedPassword;
+            }
+
+            if (updateUser.IsAdmin.HasValue)
+            {
+                user.IsAdmin = updateUser.IsAdmin.Value;
+            }
 
             var userDto = await _db.Users
                 .Where(u => u.Id == userId)

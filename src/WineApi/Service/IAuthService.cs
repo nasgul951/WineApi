@@ -1,5 +1,4 @@
 using WineApi.Data;
-using WineApi.Model.Auth;
 
 namespace WineApi.Service;
 
