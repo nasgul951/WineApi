@@ -72,8 +72,7 @@ public class AuthService : IAuthService
             throw new ConflictException("Username");
         }
 
-        //TODO
-        var salt = "TheSalt";
+        var salt = CryptoHelper.GenerateSalt(16);
         var hashedPassword = CryptoHelper.HashPassword(addUser.Password, salt);
 
         var user = new User
