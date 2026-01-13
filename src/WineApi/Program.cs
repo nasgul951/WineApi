@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using WineApi.Data;
 using WineApi.Extensions;
+using WineApi.Filters;
 using WineApi.Helpers;
 using WineApi.Middleware;
 
@@ -28,7 +29,10 @@ builder.Services
     .AddAuthentication("Token")
     .AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("Token", null);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<PagingFilter>();
+});
 
 builder.Services.AddCorsPolicy(builder.Configuration);
 
