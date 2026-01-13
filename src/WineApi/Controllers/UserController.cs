@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using WineApi.Attributes;
 using WineApi.Model.User;
 using WineApi.Service;
 
@@ -16,11 +17,11 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("query")]
-    public async Task<IActionResult> Query([FromQuery] PagedRequest<UserRequest, UserDto> req)
+    [UsePaging]
+    public async Task<IActionResult> Query(UserRequest req)
     {
-        var q = _userService.GetByFilter(req.FilterObject);
-        var response = await req.BuildResponseAsync(q);
-        return Ok(response);
+        var query = _userService.GetByFilter(req);
+        return Ok(query);
     }
 
 }
