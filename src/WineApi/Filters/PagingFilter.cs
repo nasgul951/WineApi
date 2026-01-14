@@ -4,34 +4,27 @@ using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using WineApi.Attributes;
 using WineApi.Extensions;
+using WineApi.Model.Base;
 
 namespace WineApi.Filters;
 
-public class PagingFilter : IAsyncResultFilter
+public class PagingFilter<T> : IAsyncResultFilter
 {
     public async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
     {
-        var usePaging = context.ActionDescriptor
-            .EndpointMetadata
-            .OfType<UsePagingAttribute>()
-            .Any();
-        
-        if (!usePaging)
-        {
-            await next();
-            return;
-        }
-
         if (context.Result is not ObjectResult objectResult)
         {
             await next();
             return;
         }
 
-        var query = objectResult.Value as IQueryable<object>;
-        if (query == null) {
-            throw new Exception("UsePaging expects method to return IQueryable<T>");
+        if (objectResult.Value is not IQueryable<T> query)
+        {
+            await next();
+            return;
         }
+
+        var elementType = query.ElementType;
 
         // TODO make default page size configurable
         var http = context.HttpContext;
@@ -42,34 +35,32 @@ public class PagingFilter : IAsyncResultFilter
 
         // No sort field in query, try to get default sort from return type.
         if (sortField == null) {
-            var defaultSortProp = query.ElementType
+            var defaultSortProp = elementType
                 .GetProperties()
                 .FirstOrDefault(p => p.GetCustomAttributes(typeof(DefaultSortAttribute), false).Any());
             if (defaultSortProp == null) {
-                defaultSortProp = query.ElementType.GetProperties().First();
+                defaultSortProp = elementType.GetProperties().First();
             }
             sortField = defaultSortProp.Name;
             sortDirection = defaultSortProp.GetCustomAttribute<DefaultSortAttribute>()?.Sort ?? "asc";
         }
 
-        var sortQuery = query.ApplySorting(sortField, sortDirection);
+        // Apply sorting
+        query = query.ApplySorting(sortField, sortDirection);
 
-        // Get total
         var totalCount = await query.CountAsync();
 
-        var items = await sortQuery
+        var pagedItems = await query
             .Skip(page * pageSize)
             .Take(pageSize)
             .ToListAsync();
 
-        var pagedType = typeof(PagedResponse<>).MakeGenericType(query.ElementType);
-        var pagedResult = Activator.CreateInstance(pagedType);
+        var pagedResult = new PagedResponse<T>
+        {
+            Items = pagedItems,
+            TotalCount = totalCount
+        };
         
-        pagedType.GetProperty(nameof(PagedResponse<object>.Items))!
-            .SetValue(pagedResult, items);
-        pagedType.GetProperty(nameof(PagedResponse<object>.TotalCount))!
-            .SetValue(pagedResult, totalCount);
-
         context.Result = new OkObjectResult(pagedResult);
 
         await next();

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WineApi.Attributes;
+using WineApi.Filters;
 using WineApi.Model.User;
 using WineApi.Service;
 
@@ -18,10 +19,7 @@ public class UserController : ControllerBase
 
     [HttpGet("query")]
     [UsePaging]
-    public async Task<IActionResult> Query(UserRequest req)
-    {
-        var query = _userService.GetByFilter(req);
-        return Ok(query);
-    }
+    public IQueryable<UserDto> Query([FromQuery] UserRequest req) => _userService.GetByFilter(req);
+    
 
 }
