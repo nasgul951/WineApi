@@ -16,7 +16,7 @@ namespace WineApi.Extensions
             return source;
         }
 
-        public static IQueryable<object> ApplySorting(this IQueryable<object> query, string sortField, string sortDirection)
+        public static IQueryable<T> ApplySorting<T>(this IQueryable<T> query, string sortField, string sortDirection)
         {
             if (string.IsNullOrWhiteSpace(sortField))
                 return query;

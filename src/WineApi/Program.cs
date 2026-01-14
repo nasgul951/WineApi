@@ -18,7 +18,6 @@ var serverVersion = ServerVersion.AutoDetect(connString);
 builder.Services.AddDbContext<WineContext>(
     dbContextOptions => dbContextOptions
         .UseMySql(connString, serverVersion)
-        .LogTo(Console.WriteLine, LogLevel.Information)
 );
 
 builder.Services.AddHealthChecks();
@@ -29,10 +28,7 @@ builder.Services
     .AddAuthentication("Token")
     .AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("Token", null);
 
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add<PagingFilter>();
-});
+builder.Services.AddControllers();
 
 builder.Services.AddCorsPolicy(builder.Configuration);
 
