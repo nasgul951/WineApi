@@ -1,3 +1,4 @@
+using WineApi.Filters;
 using WineApi.Service;
 
 namespace WineApi.Extensions;
@@ -9,6 +10,8 @@ public static class ServiceCollectionExtensions
         // Register services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IWineService, WineService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped(typeof(PagingFilter<>));
 
         return services;
     }

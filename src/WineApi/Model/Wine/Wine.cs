@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using WineApi.Model.Attributes;
+using WineApi.Attributes;
 
 public class Wine
 {

@@ -1,3 +1,5 @@
+namespace WineApi.Extensions;
+
 public static class StringEx
 {
     /// <summary>

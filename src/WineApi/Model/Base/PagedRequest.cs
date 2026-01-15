@@ -1,10 +1,9 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
-using WineApi.Model.Attributes;
+using WineApi.Attributes;
+using WineApi.Extensions;
 
 /// <summary>
 /// Base class for paged requests.
