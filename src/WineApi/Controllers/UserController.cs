@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using WineApi.Attributes;
+using WineApi.Constants;
 using WineApi.Filters;
 using WineApi.Model.User;
 using WineApi.Service;
 
 namespace WineApi.Controllers;
 
+[Authorize(Roles = UserRole.Admin)]
 [ApiController]
 [Route("[controller]")]
 public class UserController : ControllerBase
@@ -21,7 +24,7 @@ public class UserController : ControllerBase
     [UsePaging]
     public IQueryable<UserDto> Query([FromQuery] UserRequest req) => _userService.GetByFilter(req);
     
-    [HttpGet("{id: int}")]
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> GetUser(int id){
         var user = await _userService.GetById(id);
         return Ok(user);
@@ -33,7 +36,7 @@ public class UserController : ControllerBase
         return Accepted(user);
     }
 
-    [HttpPatch("{id: int}")]
+    [HttpPatch("{id:int}")]
     public async Task<IActionResult> UpdateUser(int id, AddUpdateUser req) {
         var user = await _userService.UpdateUser(id, req);
         return Ok(user);
