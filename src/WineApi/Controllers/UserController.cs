@@ -21,5 +21,21 @@ public class UserController : ControllerBase
     [UsePaging]
     public IQueryable<UserDto> Query([FromQuery] UserRequest req) => _userService.GetByFilter(req);
     
+    [HttpGet("{id: int}")]
+    public async Task<IActionResult> GetUser(int id){
+        var user = await _userService.GetById(id);
+        return Ok(user);
+    }
 
+    [HttpPost]
+    public async Task<IActionResult> AddUser(AddUpdateUser req) {
+        var user = await _userService.AddUser(req);
+        return Accepted(user);
+    }
+
+    [HttpPatch("{id: int}")]
+    public async Task<IActionResult> UpdateUser(int id, AddUpdateUser req) {
+        var user = await _userService.UpdateUser(id, req);
+        return Ok(user);
+    }
 }
