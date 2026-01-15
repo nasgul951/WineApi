@@ -2,7 +2,9 @@ using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using WineApi.Data;
 using WineApi.Exceptions;
+using WineApi.Extensions;
 using WineApi.Helpers;
+using WineApi.Model.User;
 
 namespace WineApi.Service;
 

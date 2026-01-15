@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using WineApi.Data;
 using WineApi.Extensions;
+using WineApi.Filters;
 using WineApi.Helpers;
+using WineApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +18,6 @@ var serverVersion = ServerVersion.AutoDetect(connString);
 builder.Services.AddDbContext<WineContext>(
     dbContextOptions => dbContextOptions
         .UseMySql(connString, serverVersion)
-        .LogTo(Console.WriteLine, LogLevel.Information)
 );
 
 builder.Services.AddHealthChecks();
@@ -44,6 +45,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<ExceptionMiddleware>();
+
 //app.UseHttpsRedirection();
 app.MapHealthChecks("/");
 app.UseCors("CorsPolicy");
@@ -52,3 +55,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

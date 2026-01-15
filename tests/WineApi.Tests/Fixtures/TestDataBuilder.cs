@@ -11,7 +11,8 @@ public static class TestDataBuilder
         string password = "hashedpassword",
         string salt = "testsalt",
         string? key = null,
-        DateTime? keyExpires = null)
+        DateTime? keyExpires = null,
+        bool isAdmin = false)
     {
         return new WineApi.Data.User
         {
@@ -21,7 +22,8 @@ public static class TestDataBuilder
             Salt = salt,
             Key = key,
             KeyExpires = keyExpires,
-            LastOn = DateTime.UtcNow.ToString("O")
+            LastOn = DateTime.UtcNow.ToString("O"),
+            IsAdmin = isAdmin
         };
     }
 
