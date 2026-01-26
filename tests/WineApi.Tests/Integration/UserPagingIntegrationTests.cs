@@ -20,11 +20,27 @@ public class UserPagingIntegrationTests
         _factory = new WineApiFactory();
         // CreateClient() initializes the test server and services
         _client = _factory.CreateClient();
+        // Add auth header for the dedicated admin user seeded below
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "admin-test-token");
 
         // Clear any existing data for test isolation
         using var scope = _factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<WineContext>();
         context.Users.RemoveRange(context.Users);
+
+        // Seed a dedicated admin user for authentication (high Id to avoid collision with test data)
+        context.Users.Add(new User
+        {
+            Id = 999999,
+            Username = "testadmin",
+            Password = "hash",
+            Salt = "salt",
+            IsAdmin = true,
+            Key = "admin-test-token",
+            KeyExpires = DateTime.UtcNow.AddHours(1)
+        });
+
         context.SaveChanges();
     }
 
@@ -97,7 +113,7 @@ public class UserPagingIntegrationTests
         var result = await response.Content.ReadFromJsonAsync<PagedResponse<UserDto>>();
 
         result.Should().NotBeNull();
-        result!.TotalCount.Should().Be(25);
+        result!.TotalCount.Should().Be(26); // 25 test users + 1 admin
         result.Items.Should().HaveCount(10); // Default page size
     }
 
@@ -113,7 +129,7 @@ public class UserPagingIntegrationTests
         var result = await response.Content.ReadFromJsonAsync<PagedResponse<UserDto>>();
 
         result.Should().NotBeNull();
-        result!.TotalCount.Should().Be(25);
+        result!.TotalCount.Should().Be(26); // 25 test users + 1 admin
         result.Items.Should().HaveCount(5);
     }
 
@@ -129,7 +145,7 @@ public class UserPagingIntegrationTests
         var result = await response.Content.ReadFromJsonAsync<PagedResponse<UserDto>>();
 
         result.Should().NotBeNull();
-        result!.TotalCount.Should().Be(25);
+        result!.TotalCount.Should().Be(26); // 25 test users + 1 admin
         result.Items.Should().HaveCount(10);
 
         // Page 1 should have users 11-20 (0-indexed pages)
@@ -150,8 +166,8 @@ public class UserPagingIntegrationTests
         var result = await response.Content.ReadFromJsonAsync<PagedResponse<UserDto>>();
 
         result.Should().NotBeNull();
-        result!.TotalCount.Should().Be(25);
-        result.Items.Should().HaveCount(5); // Only 5 remaining on last page
+        result!.TotalCount.Should().Be(26); // 25 test users + 1 admin
+        result.Items.Should().HaveCount(6); // 6 remaining on last page (includes admin)
     }
 
     [Test]
@@ -166,7 +182,7 @@ public class UserPagingIntegrationTests
         var result = await response.Content.ReadFromJsonAsync<PagedResponse<UserDto>>();
 
         result.Should().NotBeNull();
-        result!.TotalCount.Should().Be(25);
+        result!.TotalCount.Should().Be(26); // 25 test users + 1 admin
         result.Items.Should().BeEmpty();
     }
 
@@ -216,8 +232,8 @@ public class UserPagingIntegrationTests
         var result = await response.Content.ReadFromJsonAsync<PagedResponse<UserDto>>();
 
         result.Should().NotBeNull();
-        // Bob is the only admin, should be first when sorting desc
-        result!.Items.First().Username.Should().Be("bob");
+        // Bob and testadmin are admins, should be first when sorting desc
+        result!.Items.First().IsAdmin.Should().BeTrue();
     }
 
     [Test]
@@ -263,13 +279,13 @@ public class UserPagingIntegrationTests
         var page1 = await _client.GetFromJsonAsync<PagedResponse<UserDto>>("/user/query?page=1&pageSize=10");
         var page2 = await _client.GetFromJsonAsync<PagedResponse<UserDto>>("/user/query?page=2&pageSize=10");
 
-        page0!.TotalCount.Should().Be(25);
-        page1!.TotalCount.Should().Be(25);
-        page2!.TotalCount.Should().Be(25);
+        page0!.TotalCount.Should().Be(26); // 25 test users + 1 admin
+        page1!.TotalCount.Should().Be(26);
+        page2!.TotalCount.Should().Be(26);
 
         // Verify we get all unique users across pages
         var allUsers = page0.Items.Concat(page1.Items).Concat(page2.Items).ToList();
-        allUsers.Should().HaveCount(25);
-        allUsers.Select(u => u.Id).Distinct().Should().HaveCount(25);
+        allUsers.Should().HaveCount(26); // 25 test users + 1 admin
+        allUsers.Select(u => u.Id).Distinct().Should().HaveCount(26);
     }
 }
