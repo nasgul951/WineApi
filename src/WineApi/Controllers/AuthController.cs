@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WineApi.Constants;
 using WineApi.Exceptions;
 using WineApi.Extensions;
 using WineApi.Service;
@@ -49,8 +50,9 @@ public class AuthController : ControllerBase
         var principal = HttpContext.User;
         return Ok(new
         {
-            UserId = principal.FindFirstValue(ClaimTypes.NameIdentifier),
-            UserName = principal.FindFirstValue(ClaimTypes.Name)
+            UserId = principal.FindFirstValueAsInt(ClaimTypes.NameIdentifier),
+            UserName = principal.FindFirstValue(ClaimTypes.Name),
+            IsAdmin = principal.IsInRole(UserRole.Admin)
         });
     }
 

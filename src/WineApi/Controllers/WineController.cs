@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using WineApi.Service;
 using Microsoft.AspNetCore.Http.HttpResults;
+using WineApi.Attributes;
 
 namespace WineApi.Controllers;
 
@@ -21,12 +22,8 @@ public class WineController : ControllerBase
     }
 
     [HttpGet("query")]
-    public async Task<IActionResult> Get([FromQuery] PagedRequest<WineRequest, Wine> req)
-    {
-        var q = _service.GetWines(req.FilterObject);
-        var response = await req.BuildResponseAsync(q);
-        return Ok(response);
-    }
+    [UsePaging]
+    public IQueryable<Wine> Query([FromQuery] WineRequest req) => _service.GetWines(req);
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetWine(int id)

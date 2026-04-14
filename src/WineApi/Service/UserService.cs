@@ -111,6 +111,8 @@ namespace WineApi.Service
                 user.IsAdmin = updateUser.IsAdmin.Value;
             }
 
+            await _db.SaveChangesAsync();
+
             var userDto = await _db.Users
                 .Where(u => u.Id == userId)
                 .ToUserDto()

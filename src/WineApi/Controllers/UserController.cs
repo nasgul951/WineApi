@@ -22,7 +22,7 @@ public class UserController : ControllerBase
 
     [HttpGet("query")]
     [UsePaging]
-    public IQueryable<UserDto> Query([FromQuery] UserRequest req) => _userService.GetByFilter(req);
+    public IQueryable<UserDto> Query([FromQuery] UserRequest filter) => _userService.GetByFilter(filter);
     
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetUser(int id){

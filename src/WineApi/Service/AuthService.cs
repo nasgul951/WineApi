@@ -69,7 +69,7 @@ public class AuthService : IAuthService
     {
         var guid = Guid.NewGuid();
         user.Key = guid.ToString().Replace("-", "").ToLowerInvariant(); // Generate a new key
-        user.KeyExpires = DateTime.UtcNow.AddDays(7); // Key valid for 7 days
+        user.KeyExpires = DateTime.UtcNow.AddHours(6); //.AddDays(7); // Key valid for 7 days
         user.LastOn = DateTime.UtcNow.ToString("o"); // Update last login time
         await _db.SaveChangesAsync();
     }
