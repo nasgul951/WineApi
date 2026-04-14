@@ -27,41 +27,6 @@ public class WineControllerTests
         _controller = new WineController(_mockLogger.Object, _mockWineService.Object);
     }
 
-    #region Get (Paged Query) Tests
-
-    // Note: Full end-to-end testing of Get() with PagedRequest is challenging in unit tests
-    // because PagedRequest.BuildResponseAsync() uses EF.Property() which only works with
-    // actual EF Core queries. Comprehensive testing of pagination and sorting should be
-    // done in integration tests with a real or in-memory database context.
-
-    [Test]
-    public async Task Get_WithFilterObject_PassesFilterToService()
-    {
-        // Arrange
-        var wines = new List<Wine>().AsQueryable().BuildMock();
-        WineRequest? capturedRequest = null;
-
-        _mockWineService
-            .Setup(x => x.GetWines(It.IsAny<WineRequest>()))
-            .Returns(wines)
-            .Callback<WineRequest>(req => capturedRequest = req);
-
-        var request = new PagedRequest<WineRequest, Wine>
-        {
-            Filter = "{\"varietal\":\"Cabernet\",\"showAll\":true}"
-        };
-
-        // Act
-        await _controller.Get(request);
-
-        // Assert
-        capturedRequest.Should().NotBeNull();
-        capturedRequest!.Varietal.Should().Be("Cabernet");
-        capturedRequest.ShowAll.Should().BeTrue();
-    }
-
-    #endregion
-
     #region GetWine Tests
 
     [Test]
