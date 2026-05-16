@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using WineApi.Data;
 using WineApi.Exceptions;
 using WineApi.Helpers;
@@ -29,7 +30,7 @@ public class AuthServiceTests
             .Options;
 
         _context = new WineContext(options);
-        _authService = new AuthService(_context);
+        _authService = new AuthService(_context, Options.Create(new AuthOptions()));
     }
 
     /// <summary>
@@ -70,8 +71,7 @@ public class AuthServiceTests
         result!.Token.Should().NotBeNullOrEmpty();
         result.Token.Should().HaveLength(32); // GUID without hyphens
         result.Expires.Should().BeAfter(DateTime.UtcNow);
-        // since expires is configurable, we'll skip this test.
-        //result.Expires.Should().BeCloseTo(DateTime.UtcNow.AddDays(7), TimeSpan.FromMinutes(1));
+        result.Expires.Should().BeCloseTo(DateTime.UtcNow.AddMinutes(10080), TimeSpan.FromMinutes(1));
     }
 
     [Test]
@@ -291,7 +291,7 @@ public class AuthServiceTests
     }
 
     [Test]
-    public async Task Authenticate_MultipleTimes_GeneratesDifferentTokens()
+    public async Task Authenticate_MultipleTimes_ReusesValidToken()
     {
         // Arrange
         var salt = "testsalt";
@@ -311,13 +311,72 @@ public class AuthServiceTests
 
         // Act
         var result1 = await _authService.Authenticate("testuser", password);
-        await Task.Delay(10); // Small delay to ensure different GUIDs
         var result2 = await _authService.Authenticate("testuser", password);
 
-        // Assert
+        // Assert - second login reuses the still-valid token
         result1.Should().NotBeNull();
         result2.Should().NotBeNull();
-        result1!.Token.Should().NotBe(result2!.Token);
+        result1!.Token.Should().Be(result2!.Token);
+    }
+
+    [Test]
+    public async Task Authenticate_WithKeyValidForMoreThanOneHour_ReusesExistingKey()
+    {
+        // Arrange
+        var salt = "testsalt";
+        var password = "password123";
+        var hashedPassword = CryptoHelper.HashPassword(password, salt);
+        var existingKey = "existingkey1234567890123456789012";
+
+        var user = new User
+        {
+            Id = 1,
+            Username = "testuser",
+            Password = hashedPassword,
+            Salt = salt,
+            Key = existingKey,
+            KeyExpires = DateTime.UtcNow.AddHours(2)
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.Authenticate("testuser", password);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Token.Should().Be(existingKey);
+    }
+
+    [Test]
+    public async Task Authenticate_WithKeyExpiringWithinOneHour_GeneratesNewKey()
+    {
+        // Arrange
+        var salt = "testsalt";
+        var password = "password123";
+        var hashedPassword = CryptoHelper.HashPassword(password, salt);
+        var existingKey = "expiringsoonkey123456789012345678";
+
+        var user = new User
+        {
+            Id = 1,
+            Username = "testuser",
+            Password = hashedPassword,
+            Salt = salt,
+            Key = existingKey,
+            KeyExpires = DateTime.UtcNow.AddMinutes(30)
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.Authenticate("testuser", password);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Token.Should().NotBe(existingKey);
     }
 
     [Test]
