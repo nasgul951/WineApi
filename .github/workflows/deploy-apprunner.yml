@@ -1,0 +1,88 @@
+name: Deploy to AppRunner
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Docker image tag to deploy'
+        required: true
+        default: 'latest'
+  workflow_run:
+    workflows:
+      - Build and Push to ECR
+    types:
+      - completed
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: nasgul951/wine-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Determine image tag
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
+            echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=${{ github.event.inputs.image-tag }}" >> $GITHUB_ENV
+          fi
+
+      - name: Update AppRunner service
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          APPRUNNER_SERVICE_ARN: ${{ secrets.APPRUNNER_SERVICE_ARN }}
+        run: |
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "Updating AppRunner service with image: $IMAGE_URI"
+          
+          aws apprunner update-service \
+            --service-arn "$APPRUNNER_SERVICE_ARN" \
+            --source-configuration ImageRepository={ImageIdentifier=$IMAGE_URI,ImageRepositoryType=ECR} \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for AppRunner deployment
+        env:
+          APPRUNNER_SERVICE_ARN: ${{ secrets.APPRUNNER_SERVICE_ARN }}
+        run: |
+          echo "Waiting for AppRunner deployment to complete..."
+          
+          while true; do
+            STATUS=$(aws apprunner describe-service \
+              --service-arn "$APPRUNNER_SERVICE_ARN" \
+              --region ${{ env.AWS_REGION }} \
+              --query 'Service.Status' \
+              --output text)
+            
+            echo "Current status: $STATUS"
+            
+            if [ "$STATUS" = "RUNNING" ]; then
+              echo "AppRunner service is running!"
+              break
+            elif [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "DELETED" ]; then
+              echo "Deployment failed with status: $STATUS"
+              exit 1
+            fi
+            
+            echo "Waiting 30 seconds before next check..."
+            sleep 30
+          done
