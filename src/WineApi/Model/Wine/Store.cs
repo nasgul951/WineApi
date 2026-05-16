@@ -1,6 +1,25 @@
 using System.Text.Json.Serialization;
 
-public class Store {
+public class StoreInventory
+{
+    public int Id { get; set; }
+
+    public string Name { get; set; } = null!;
+
+    public bool HasTopBin { get; set; }
+    
+    public bool HasBottomBin { get; set; }
+    
+    public int Rows { get; set; }
+    
+    public int Columns { get; set; }
+    
+    public int TotalBottles { get; set; }
+
+    public List<StoreCell> Items { get; set; } = new List<StoreCell>();
+}
+
+public class StoreCell {
     public int Id { get; set; }
 
     public int BinX { get; set; }
