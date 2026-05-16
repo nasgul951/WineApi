@@ -57,7 +57,7 @@ jobs:
           
           aws apprunner update-service \
             --service-arn "$APPRUNNER_SERVICE_ARN" \
-            --source-configuration ImageRepository={ImageIdentifier=$IMAGE_URI,ImageRepositoryType=ECR} \
+            --source-configuration '{"ImageRepository":{"ImageIdentifier":"'"$IMAGE_URI"'","ImageRepositoryType":"ECR"}}' \
             --region ${{ env.AWS_REGION }}
 
       - name: Wait for AppRunner deployment
