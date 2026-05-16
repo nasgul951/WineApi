@@ -22,6 +22,8 @@ builder.Services.AddDbContext<WineContext>(
 
 builder.Services.AddHealthChecks();
 
+builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(nameof(AuthOptions)));
+
 builder.Services
     .AddDataServices()
     .AddHttpContextAccessor()

@@ -42,7 +42,7 @@ WineApi/
 ### Prerequisites
 
 - .NET 8.0 SDK
-- MySQL Server - you can run mysql locally via the docker compose file in src/WineApi/mysql
+- MySQL Server - you can run mysql locally via the docker compose file in /mysql
 
 ### Configuration
 

@@ -1,5 +1,5 @@
-using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using WineApi.Data;
 using WineApi.Exceptions;
 using WineApi.Extensions;
@@ -11,10 +11,12 @@ namespace WineApi.Service;
 public class AuthService : IAuthService
 {
     private readonly WineContext _db;
+    private readonly AuthOptions _authOptions;
 
-    public AuthService(WineContext wineContext)
+    public AuthService(WineContext wineContext, IOptions<AuthOptions> authOptions)
     {
         _db = wineContext;
+        _authOptions = authOptions.Value;
     }
 
     public async Task<AuthResponse?> Authenticate(string username, string password)
@@ -67,10 +69,16 @@ public class AuthService : IAuthService
     
     private async Task GenerateUserKey(User user)
     {
+        // If the existing key is still valid for at least 1 hour, keep it
+        if (user.Key != null && user.KeyExpires > DateTime.UtcNow.AddHours(1))
+        {
+            return; // Existing key is still valid
+        }
+
         var guid = Guid.NewGuid();
         user.Key = guid.ToString().Replace("-", "").ToLowerInvariant(); // Generate a new key
-        user.KeyExpires = DateTime.UtcNow.AddHours(6); //.AddDays(7); // Key valid for 7 days
-        user.LastOn = DateTime.UtcNow.ToString("o"); // Update last login time
+        user.KeyExpires = DateTime.UtcNow.AddMinutes(_authOptions.TokenExpiryMinutes);
+        user.LastOn = DateTime.UtcNow.ToString("o");  // Update last login time
         await _db.SaveChangesAsync();
     }
 }
