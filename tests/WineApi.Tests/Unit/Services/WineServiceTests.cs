@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using WineApi.Data;
-using WineApi.Model.Wine;
 using WineApi.Service;
 using WineApi.Tests.Fixtures;
 
@@ -122,6 +121,65 @@ public class WineServiceTests
     }
 
     [Test]
+    public void GetWines_WithLabelLikeFilter_ReturnsMatchingWines()
+    {
+        // Arrange
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, label: "Napa Valley Cabernet");
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, label: "Sonoma Merlot");
+
+        _context.Wines.AddRange(wine1, wine2);
+        _context.SaveChanges();
+
+        var request = new WineRequest { LabelLike = "Napa Valley", ShowAll = true };
+
+        // Act
+        var result = _wineService.GetWines(request).ToList();
+
+        // Assert
+        result.Should().HaveCount(1);
+        result[0].Label.Should().Be("Napa Valley Cabernet");
+    }
+
+    [Test]
+    public void GetWines_WithVintageFromFilter_ReturnsMatchingWines()
+    {
+        // Arrange
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, vintage: 2010);
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, vintage: 2015);
+
+        _context.Wines.AddRange(wine1, wine2);
+        _context.SaveChanges();
+
+        var request = new WineRequest { VintageFrom = 2010, ShowAll = true };
+
+        // Act
+        var result = _wineService.GetWines(request).ToList();
+
+        // Assert
+        result.Should().HaveCount(2);
+    }
+
+    [Test]
+    public void GetWines_WithVintageToFilter_ReturnsMatchingWines()
+    {
+        // Arrange
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, vintage: 2010);
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, vintage: 2015);
+
+        _context.Wines.AddRange(wine1, wine2);
+        _context.SaveChanges();
+
+        var request = new WineRequest { VintageTo = 2010, ShowAll = true };
+
+        // Act
+        var result = _wineService.GetWines(request).ToList();
+
+        // Assert
+        result.Should().HaveCount(1);
+        result[0].Vintage.Should().Be(2010);
+    }
+
+    [Test]
     public void GetWines_WithIdFilter_ReturnsSingleWine()
     {
         // Arrange
@@ -168,13 +226,73 @@ public class WineServiceTests
         _context.SaveChanges();
 
         // Act
-        var result = _wineService.GetVarietals().ToList();
+        var result = _wineService.GetVarietals(null, null).ToList();
 
         // Assert
         result.Should().HaveCount(2);
         result.Should().Contain(v => v.Name == "Cabernet" && v.Count == 2);
         result.Should().Contain(v => v.Name == "Merlot" && v.Count == 1);
     }
+
+    [Test]
+    public void GetVarietals_WithFilter_ReturnsFilteredVarietals()
+    {
+        // Arrange
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, varietal: "Zinfandel");
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, varietal: "Cabernet");
+        var wine3 = TestDataBuilder.CreateTestWine(id: 3, varietal: "Merlot");
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        var bottle1 = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var bottle2 = TestDataBuilder.CreateTestBottle(id: 2, wineId: 2, storageId: 1);
+        var bottle3 = TestDataBuilder.CreateTestBottle(id: 3, wineId: 3, storageId: 1);
+
+        bottle1.Consumed = 0;
+        bottle2.Consumed = 0;
+        bottle3.Consumed = 0;
+
+        _context.Wines.AddRange(wine1, wine2, wine3);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(bottle1, bottle2, bottle3);
+        _context.SaveChanges();
+
+        // Act
+        var result = _wineService.GetVarietals("Cab", null).ToList();
+
+        // Assert
+        result.Should().HaveCount(1);
+        result[0].Name.Should().Be("Cabernet");
+    }
+
+    [Test]
+    public void GetVarietals_WithLimit_ReturnsLimitedVarietals()
+    {
+        // Arrange
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, varietal: "Zinfandel");
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, varietal: "Cabernet");
+        var wine3 = TestDataBuilder.CreateTestWine(id: 3, varietal: "Merlot");
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        var bottle1 = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var bottle2 = TestDataBuilder.CreateTestBottle(id: 2, wineId: 2, storageId: 1);
+        var bottle3 = TestDataBuilder.CreateTestBottle(id: 3, wineId: 3, storageId: 1);
+
+        bottle1.Consumed = 0;
+        bottle2.Consumed = 0;
+        bottle3.Consumed = 0;
+
+        _context.Wines.AddRange(wine1, wine2, wine3);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(bottle1, bottle2, bottle3);
+        _context.SaveChanges();
+
+        // Act
+        var result = _wineService.GetVarietals(null, 2).ToList();
+
+        // Assert
+        result.Should().HaveCount(2);
+    }
+    
 
     [Test]
     public void GetVarietals_OnlyIncludesWinesWithAvailableBottles()
@@ -196,7 +314,7 @@ public class WineServiceTests
         _context.SaveChanges();
 
         // Act
-        var result = _wineService.GetVarietals().ToList();
+        var result = _wineService.GetVarietals(null, null).ToList();
 
         // Assert
         result.Should().HaveCount(1);
@@ -226,7 +344,7 @@ public class WineServiceTests
         _context.SaveChanges();
 
         // Act
-        var result = _wineService.GetVarietals().ToList();
+        var result = _wineService.GetVarietals(null, null).ToList();
 
         // Assert
         result.Should().HaveCount(3);
@@ -259,10 +377,187 @@ public class WineServiceTests
         _context.SaveChanges();
 
         // Act
-        var result = _wineService.GetVineyards(null).ToList();
+        var result = _wineService.GetVineyards(null, null).ToList();
 
         // Assert
         result.Should().HaveCount(2);
+    }
+
+    [Test]
+    public void GetVineyards_WithFilter_ReturnsFilteredVineyards()
+    {
+        // Arrange
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, vineyard: "Napa Valley");
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, vineyard: "Sonoma");
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        var bottle1 = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var bottle2 = TestDataBuilder.CreateTestBottle(id: 2, wineId: 2, storageId: 1);
+
+        bottle1.Consumed = 0;
+        bottle2.Consumed = 0;
+
+        _context.Wines.AddRange(wine1, wine2);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(bottle1, bottle2);
+        _context.SaveChanges();
+
+        // Act
+        var result = _wineService.GetVineyards("Napa", null).ToList();
+
+        // Assert
+        result.Should().HaveCount(1);
+        result[0].Name.Should().Be("Napa Valley");
+    }
+
+    [Test]
+    public void GetVineyards_WithLimit_ReturnsLimitedVineyards()
+    {
+        // Arrange
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, vineyard: "Napa Valley");
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, vineyard: "Sonoma");
+        var wine3 = TestDataBuilder.CreateTestWine(id: 3, vineyard: "Central Coast");
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        var bottle1 = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var bottle2 = TestDataBuilder.CreateTestBottle(id: 2, wineId: 2, storageId: 1);
+        var bottle3 = TestDataBuilder.CreateTestBottle(id: 3, wineId: 3, storageId: 1);
+
+        bottle1.Consumed = 0;
+        bottle2.Consumed = 0;
+        bottle3.Consumed = 0;
+        
+        _context.Wines.AddRange(wine1, wine2, wine3);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(bottle1, bottle2, bottle3);
+        _context.SaveChanges();
+
+        // Act
+        var result = _wineService.GetVineyards(null, 2).ToList();
+
+        // Assert
+        result.Should().HaveCount(2);
+    }
+
+    #endregion
+
+    #region GetLabels Tests
+
+    [Test]
+    public void GetLabels_ReturnsUniqueLabelsWithCounts()
+    {
+        // Arrange
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, label: "Reserve");
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, label: "Reserve");
+        var wine3 = TestDataBuilder.CreateTestWine(id: 3, label: "Estate");
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        var bottle1 = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var bottle2 = TestDataBuilder.CreateTestBottle(id: 2, wineId: 2, storageId: 1);
+        var bottle3 = TestDataBuilder.CreateTestBottle(id: 3, wineId: 3, storageId: 1);
+
+        bottle1.Consumed = 0;
+        bottle2.Consumed = 0;
+        bottle3.Consumed = 0;
+
+        _context.Wines.AddRange(wine1, wine2, wine3);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(bottle1, bottle2, bottle3);
+        _context.SaveChanges();
+
+        // Act
+        var result = _wineService.GetLabels(null, null).ToList();
+
+        // Assert
+        result.Should().HaveCount(2);
+        result.Should().Contain(l => l.Name == "Reserve" && l.Count == 2);
+        result.Should().Contain(l => l.Name == "Estate" && l.Count == 1);
+    }
+
+    [Test]
+    public void GetLabels_WithFilter_ReturnsFilteredLabels()
+    {
+        // Arrange
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, label: "Reserve");
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, label: "Estate");
+        var wine3 = TestDataBuilder.CreateTestWine(id: 3, label: "Grand Cru");
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        var bottle1 = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var bottle2 = TestDataBuilder.CreateTestBottle(id: 2, wineId: 2, storageId: 1);
+        var bottle3 = TestDataBuilder.CreateTestBottle(id: 3, wineId: 3, storageId: 1);
+
+        bottle1.Consumed = 0;
+        bottle2.Consumed = 0;
+        bottle3.Consumed = 0;
+
+        _context.Wines.AddRange(wine1, wine2, wine3);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(bottle1, bottle2, bottle3);
+        _context.SaveChanges();
+
+        // Act
+        var result = _wineService.GetLabels("Res", null).ToList();
+
+        // Assert
+        result.Should().HaveCount(1);
+        result[0].Name.Should().Be("Reserve");
+    }
+
+    [Test]
+    public void GetLabels_WithLimit_ReturnsLimitedLabels()
+    {
+        // Arrange
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, label: "Reserve");
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, label: "Estate");
+        var wine3 = TestDataBuilder.CreateTestWine(id: 3, label: "Grand Cru");
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        var bottle1 = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var bottle2 = TestDataBuilder.CreateTestBottle(id: 2, wineId: 2, storageId: 1);
+        var bottle3 = TestDataBuilder.CreateTestBottle(id: 3, wineId: 3, storageId: 1);
+
+        bottle1.Consumed = 0;
+        bottle2.Consumed = 0;
+        bottle3.Consumed = 0;
+
+        _context.Wines.AddRange(wine1, wine2, wine3);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(bottle1, bottle2, bottle3);
+        _context.SaveChanges();
+
+        // Act
+        var result = _wineService.GetLabels(null, 2).ToList();
+
+        // Assert
+        result.Should().HaveCount(2);
+    }
+
+    [Test]
+    public void GetLabels_OnlyIncludesWinesWithAvailableBottles()
+    {
+        // Arrange
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, label: "Reserve");
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, label: "Estate");
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        var bottle1 = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var bottle2 = TestDataBuilder.CreateTestBottle(id: 2, wineId: 2, storageId: 1);
+
+        bottle1.Consumed = 0; // Available
+        bottle2.Consumed = 1; // Consumed
+
+        _context.Wines.AddRange(wine1, wine2);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(bottle1, bottle2);
+        _context.SaveChanges();
+
+        // Act
+        var result = _wineService.GetLabels(null, null).ToList();
+
+        // Assert
+        result.Should().HaveCount(1);
+        result[0].Name.Should().Be("Reserve");
     }
 
     #endregion

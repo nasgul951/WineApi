@@ -2,8 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MockQueryable.Moq;
 using WineApi.Controllers;
-using WineApi.Model.Attributes.Varietal;
-using WineApi.Model.Wine;
+using WineApi.Model.Base;
 using WineApi.Service;
 
 namespace WineApi.Tests.Unit.Controllers;
@@ -156,23 +155,23 @@ public class WineControllerTests
     public async Task GetVariatals_ReturnsOkWithVarietalList()
     {
         // Arrange
-        var varietals = new List<Varietal>
+        var varietals = new List<NameSearchResult>
         {
-            new Varietal { Name = "Cabernet", Count = 5 },
-            new Varietal { Name = "Merlot", Count = 3 }
+            new NameSearchResult { Name = "Cabernet", Count = 5 },
+            new NameSearchResult { Name = "Merlot", Count = 3 }
         }.AsQueryable().BuildMock();
 
         _mockWineService
-            .Setup(x => x.GetVarietals())
+            .Setup(x => x.GetVarietals(null, null))
             .Returns(varietals);
 
         // Act
-        var result = await _controller.GetVariatals();
+        var result = await _controller.GetVariatals(null, null);
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
         var okResult = result as OkObjectResult;
-        var varietalList = okResult!.Value as List<Varietal>;
+        var varietalList = okResult!.Value as List<NameSearchResult>;
         varietalList.Should().HaveCount(2);
         varietalList![0].Name.Should().Be("Cabernet");
         varietalList[1].Name.Should().Be("Merlot");
@@ -186,23 +185,23 @@ public class WineControllerTests
     public async Task GetVineyards_WithoutFilter_ReturnsOkWithAllVineyards()
     {
         // Arrange
-        var vineyards = new List<Vineyard>
+        var vineyards = new List<NameSearchResult>
         {
-            new Vineyard { Name = "Napa Valley", Count = 10 },
-            new Vineyard { Name = "Sonoma", Count = 7 }
+            new NameSearchResult { Name = "Napa Valley", Count = 10 },
+            new NameSearchResult { Name = "Sonoma", Count = 7 }
         }.AsQueryable().BuildMock();
 
         _mockWineService
-            .Setup(x => x.GetVineyards(null))
+            .Setup(x => x.GetVineyards(null, null))
             .Returns(vineyards);
 
         // Act
-        var result = await _controller.GetVineyards(null);
+        var result = await _controller.GetVineyards(null, null);
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
         var okResult = result as OkObjectResult;
-        var vineyardList = okResult!.Value as List<Vineyard>;
+        var vineyardList = okResult!.Value as List<NameSearchResult>;
         vineyardList.Should().HaveCount(2);
     }
 
@@ -210,21 +209,21 @@ public class WineControllerTests
     public async Task GetVineyards_WithLikeFilter_PassesFilterToService()
     {
         // Arrange
-        var vineyards = new List<Vineyard>
+        var vineyards = new List<NameSearchResult>
         {
-            new Vineyard { Name = "Napa Valley", Count = 10 }
+            new NameSearchResult { Name = "Napa Valley", Count = 10 }
         }.AsQueryable().BuildMock();
 
         _mockWineService
-            .Setup(x => x.GetVineyards("Napa"))
+            .Setup(x => x.GetVineyards("Napa", null))
             .Returns(vineyards);
 
         // Act
-        var result = await _controller.GetVineyards("Napa");
+        var result = await _controller.GetVineyards("Napa", null);
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
-        _mockWineService.Verify(x => x.GetVineyards("Napa"), Times.Once);
+        _mockWineService.Verify(x => x.GetVineyards("Napa", null), Times.Once);
     }
 
     #endregion
