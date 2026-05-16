@@ -55,6 +55,22 @@ jobs:
         env:
           APPRUNNER_SERVICE_ARN: ${{ secrets.APPRUNNER_SERVICE_ARN }}
         run: |
-          aws apprunner wait service-running \
-            --service-arn "$APPRUNNER_SERVICE_ARN" \
-            --region ${{ env.AWS_REGION }}
+          while true; do
+            STATUS=$(aws apprunner describe-service \
+              --service-arn "$APPRUNNER_SERVICE_ARN" \
+              --region ${{ env.AWS_REGION }} \
+              --query 'Service.Status' \
+              --output text)
+
+            echo "Current status: $STATUS"
+
+            if [ "$STATUS" = "RUNNING" ]; then
+              echo "AppRunner service is running!"
+              break
+            elif [ "$STATUS" = "OPERATION_IN_PROGRESS" ]; then
+              sleep 30
+            else
+              echo "Deployment failed with status: $STATUS"
+              exit 1
+            fi
+          done
