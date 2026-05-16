@@ -32,6 +32,15 @@ public class WineRequest
     [JsonPropertyName("vineyard")]
     public string? Vineyard { get; set; }
 
+    [JsonPropertyName("label")]
+    public string? LabelLike { get; set; }
+
+    [JsonPropertyName("vintageFrom")]
+    public int? VintageFrom { get; set; }
+    
+    [JsonPropertyName("vintageTo")]
+    public int? VintageTo { get; set; }
+
     [JsonPropertyName("showAll")]
     public bool ShowAll { get; set; } = false;
 }

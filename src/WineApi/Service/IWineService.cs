@@ -1,13 +1,13 @@
-using WineApi.Model.Attributes.Varietal;
-using WineApi.Model.Wine;
+using WineApi.Model.Base;
 
 namespace WineApi.Service;
 
 public interface IWineService
 {
     IQueryable<Wine> GetWines(WineRequest req);
-    IQueryable<Varietal> GetVarietals();
-    IQueryable<Vineyard> GetVineyards(string? like);
+    IQueryable<NameSearchResult> GetVarietals(string like, int? limit);
+    IQueryable<NameSearchResult> GetVineyards(string? like, int? limit);
+    IQueryable<NameSearchResult> GetLabels(string? like, int? limit);
     Task<Wine> AddWine(Wine model);
     Task<Wine> UpdateWine(int id, WinePatchRequest model);
     IQueryable<Bottle> GetBottles(int? wineId, int? binId);

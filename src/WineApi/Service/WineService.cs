@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WineApi.Data;
 using WineApi.Extensions;
-using WineApi.Model.Attributes.Varietal;
-using WineApi.Model.Wine;
+using WineApi.Model.Base;
 
 namespace WineApi.Service;
 
@@ -22,15 +21,25 @@ public class WineService : IWineService
             .IfThenWhere(req.Id.HasValue, w => w.Wineid == req.Id!.Value)
             .IfThenWhere(!string.IsNullOrWhiteSpace(req.Varietal), w => w.Varietal == req.Varietal)
             .IfThenWhere(!string.IsNullOrWhiteSpace(req.Vineyard), w => w.Vineyard == req.Vineyard)
+            .IfThenWhere(!string.IsNullOrWhiteSpace(req.LabelLike), w => EF.Functions.Like(w.Label, $"%{req.LabelLike}%"))
+            .IfThenWhere(req.VintageFrom.HasValue, w => w.Vintage >= req.VintageFrom)
+            .IfThenWhere(req.VintageTo.HasValue, w => w.Vintage <= req.VintageTo)
             .ToWineModel();
     }
 
-    public IQueryable<Varietal> GetVarietals()
+    public IQueryable<NameSearchResult> GetVarietals(string? like, int? limit)
     {
-        return _db.Wines
+        var query = _db.Wines
             .Where(w => w.Bottles.Any(b => b.Consumed == 0))
-            .GroupBy(w => w.Varietal)
-            .Select(g => new Varietal
+            .IfThenWhere(!string.IsNullOrWhiteSpace(like), w => EF.Functions.Like(w.Varietal, $"%{like}%"))
+            .GroupBy(w => w.Varietal);
+
+        if (limit.HasValue)        {
+            query = query.Take(limit.Value);
+        }
+
+        return query
+            .Select(g => new NameSearchResult
             {
                 Name = g.Key!,
                 Count = g.Count()
@@ -38,13 +47,40 @@ public class WineService : IWineService
             .OrderBy(v => v.Name);
     }
 
-    public IQueryable<Vineyard> GetVineyards(string? like)
+    public IQueryable<NameSearchResult> GetVineyards(string? like, int? limit)
     {
-        return _db.Wines
+        var query = _db.Wines
             .Where(w => w.Bottles.Any(b => b.Consumed == 0))
             .IfThenWhere(!string.IsNullOrWhiteSpace(like), w => EF.Functions.Like(w.Vineyard, $"%{like}%"))
-            .GroupBy(w => w.Vineyard)
-            .Select(g => new Vineyard
+            .GroupBy(w => w.Vineyard);
+        
+        if (limit.HasValue)
+        {
+            query = query.Take(limit.Value);
+        }
+
+        return query.Select(g => new NameSearchResult
+        {
+            Name = g.Key!,
+            Count = g.Count()
+        })
+        .OrderBy(v => v.Name);
+    }
+
+    public IQueryable<NameSearchResult> GetLabels(string? like, int? limit)
+    {
+        var query = _db.Wines
+            .Where(w => w.Bottles.Any(b => b.Consumed == 0))
+            .IfThenWhere(!string.IsNullOrWhiteSpace(like), w => EF.Functions.Like(w.Label, $"%{like}%"))
+            .GroupBy(w => w.Label);
+
+        if (limit.HasValue)
+        {
+            query = query.Take(limit.Value);
+        }
+
+        return query
+            .Select(g => new NameSearchResult
             {
                 Name = g.Key!,
                 Count = g.Count()

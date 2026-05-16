@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Get Db Options
 var dbOptions = builder.Configuration.GetDbOptions();
 var connString = $"server={dbOptions.Server};user={dbOptions.User};password={dbOptions.Password};database={dbOptions.Database};SslMode=Required";
-var serverVersion = ServerVersion.AutoDetect(connString);
+var serverVersion = new MySqlServerVersion(new Version(8, 0, 0));
 
 // Add services to the container.
 builder.Services.AddDbContext<WineContext>(
