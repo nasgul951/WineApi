@@ -90,12 +90,14 @@ public class WineController : ControllerBase
     #endregion
 
     #region Store
+    // Deprecated endpoint, left in place for backward compatibility. Use GetStoreInventory from StoreController instead.
     [HttpGet("store/{id}")]
     public async Task<List<StoreCell>> GetStore(int id)
     {
         return await _service.GetStoreResult(id).ToListAsync();
     }
     
+    // TODO: move this to StoreController
     [HttpGet("store/bin/{binId:int}")]
     public async Task<List<StoreBottle>> GetBottlesByBin(int binId)
     {

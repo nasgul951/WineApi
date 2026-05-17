@@ -25,12 +25,13 @@ public class StoreService : IStoreService
     {
       Id = store.Storageid,
       Name = store.StorageDescription ?? "Unnamed Store",
+      Abbreviation = store.Abbreviation ?? "XX",
       HasBottomBin = store.HasBottomBin,
       HasTopBin = store.HasTopBin,
       Rows = store.Rows,
       Columns = store.Columns,
       TotalBottles = await _db.Bottles.CountAsync(b => b.Storageid == storeId && b.Consumed == 0),
-      Items = await _db.Bottles
+      Cells = await _db.Bottles
             .Where(b => b.Storageid == storeId)
             .Where(b => b.Consumed == 0)
             .GroupBy(b => new { b.BinY, b.BinX })

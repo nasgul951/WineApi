@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WineApi.Service;
@@ -19,14 +20,6 @@ public class StoreController : ControllerBase
     }
 
 
-    [HttpGet("{id}")]
-    public IActionResult GetStore(int id)
-    {
-        var store = _service.GetStoreInfo(id);
-        if (store == null)
-        {
-            return NotFound();
-        }
-        return Ok(store);
-    }
+    [HttpGet("{id}/inventory")]
+    public async Task<StoreInventory> GetStoreInventory(int id) => await _service.GetStoreInfo(id);
 }

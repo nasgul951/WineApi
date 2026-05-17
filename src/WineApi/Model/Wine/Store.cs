@@ -6,6 +6,8 @@ public class StoreInventory
 
     public string Name { get; set; } = null!;
 
+    public string Abbreviation { get; set; } = null!;
+
     public bool HasTopBin { get; set; }
     
     public bool HasBottomBin { get; set; }
@@ -16,7 +18,7 @@ public class StoreInventory
     
     public int TotalBottles { get; set; }
 
-    public List<StoreCell> Items { get; set; } = new List<StoreCell>();
+    public List<StoreCell> Cells { get; set; } = new List<StoreCell>();
 }
 
 public class StoreCell {
