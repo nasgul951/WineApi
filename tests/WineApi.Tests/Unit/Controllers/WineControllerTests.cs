@@ -372,10 +372,10 @@ public class WineControllerTests
     public async Task GetStore_WithValidId_ReturnsStoreList()
     {
         // Arrange
-        var stores = new List<Store>
+        var stores = new List<StoreCell>
         {
-            new Store { Id = 1, BinX = 1, BinY = 1, Count = 5 },
-            new Store { Id = 1, BinX = 1, BinY = 2, Count = 3 }
+            new StoreCell { Id = 1, BinX = 1, BinY = 1, Count = 5 },
+            new StoreCell { Id = 1, BinX = 1, BinY = 2, Count = 3 }
         }.AsQueryable().BuildMock();
 
         _mockWineService

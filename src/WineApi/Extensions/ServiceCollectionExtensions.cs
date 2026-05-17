@@ -11,6 +11,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IWineService, WineService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IStoreService, StoreService>();
         services.AddScoped(typeof(PagingFilter<>));
 
         return services;

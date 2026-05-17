@@ -89,6 +89,16 @@ public partial class WineContext : DbContext
             entity.Property(e => e.StorageDescription)
                 .HasMaxLength(50)
                 .HasColumnName("storageDescription");
+            entity.Property(e => e.Abbreviation)
+                .HasMaxLength(2);
+            entity.Property(e => e.HasTopBin)
+                .HasDefaultValue(false);
+            entity.Property(e => e.HasBottomBin)
+                .HasDefaultValue(false);
+            entity.Property(e => e.Rows)
+                .HasDefaultValue(0);
+            entity.Property(e => e.Columns)
+                .HasDefaultValue(0);
             entity.Property(e => e.StorageState)
                 .HasMaxLength(2)
                 .IsFixedLength()

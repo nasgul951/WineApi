@@ -807,6 +807,167 @@ public class WineServiceTests
 
     #endregion
 
+    #region GetSummary Tests
+
+    [Test]
+    public async Task GetSummary_WithNoData_ReturnsZeroCountsAndNullLastConsumed()
+    {
+        var result = await _wineService.GetSummary();
+
+        result.TotalBottles.Should().Be(0);
+        result.UniqueWines.Should().Be(0);
+        result.UniqueVarietals.Should().Be(0);
+        result.UniqueVineyards.Should().Be(0);
+        result.LastConsumed.Should().BeNull();
+    }
+
+    [Test]
+    public async Task GetSummary_TotalBottles_CountsOnlyUnconsumed()
+    {
+        var wine = TestDataBuilder.CreateTestWine(id: 1);
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+        var available = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var consumed = TestDataBuilder.CreateTestBottle(id: 2, wineId: 1, storageId: 1);
+        consumed.Consumed = 1;
+
+        _context.Wines.Add(wine);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(available, consumed);
+        _context.SaveChanges();
+
+        var result = await _wineService.GetSummary();
+
+        result.TotalBottles.Should().Be(1);
+    }
+
+    [Test]
+    public async Task GetSummary_UniqueWines_CountsDistinctWinesWithUnconsumedBottles()
+    {
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1);
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2);
+        var wine3 = TestDataBuilder.CreateTestWine(id: 3);
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        // wine1: two unconsumed bottles — should count as 1 unique wine
+        var bottle1 = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var bottle2 = TestDataBuilder.CreateTestBottle(id: 2, wineId: 1, storageId: 1);
+        // wine2: one unconsumed bottle
+        var bottle3 = TestDataBuilder.CreateTestBottle(id: 3, wineId: 2, storageId: 1);
+        // wine3: only a consumed bottle — should not count
+        var bottle4 = TestDataBuilder.CreateTestBottle(id: 4, wineId: 3, storageId: 1);
+        bottle4.Consumed = 1;
+
+        _context.Wines.AddRange(wine1, wine2, wine3);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(bottle1, bottle2, bottle3, bottle4);
+        _context.SaveChanges();
+
+        var result = await _wineService.GetSummary();
+
+        result.UniqueWines.Should().Be(2);
+    }
+
+    [Test]
+    public async Task GetSummary_UniqueVarietals_CountsDistinctVarietalsWithUnconsumedBottles()
+    {
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, varietal: "Cabernet");
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, varietal: "Cabernet");
+        var wine3 = TestDataBuilder.CreateTestWine(id: 3, varietal: "Merlot");
+        var wine4 = TestDataBuilder.CreateTestWine(id: 4, varietal: "Pinot Noir");
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        var bottle1 = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var bottle2 = TestDataBuilder.CreateTestBottle(id: 2, wineId: 2, storageId: 1);
+        var bottle3 = TestDataBuilder.CreateTestBottle(id: 3, wineId: 3, storageId: 1);
+        // Pinot Noir only has a consumed bottle — should not count
+        var bottle4 = TestDataBuilder.CreateTestBottle(id: 4, wineId: 4, storageId: 1);
+        bottle4.Consumed = 1;
+
+        _context.Wines.AddRange(wine1, wine2, wine3, wine4);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(bottle1, bottle2, bottle3, bottle4);
+        _context.SaveChanges();
+
+        var result = await _wineService.GetSummary();
+
+        result.UniqueVarietals.Should().Be(2);
+    }
+
+    [Test]
+    public async Task GetSummary_UniqueVineyards_CountsDistinctVineyardsWithUnconsumedBottles()
+    {
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, vineyard: "Napa Valley");
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, vineyard: "Napa Valley");
+        var wine3 = TestDataBuilder.CreateTestWine(id: 3, vineyard: "Sonoma");
+        var wine4 = TestDataBuilder.CreateTestWine(id: 4, vineyard: "Willamette");
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        var bottle1 = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var bottle2 = TestDataBuilder.CreateTestBottle(id: 2, wineId: 2, storageId: 1);
+        var bottle3 = TestDataBuilder.CreateTestBottle(id: 3, wineId: 3, storageId: 1);
+        // Willamette only has a consumed bottle — should not count
+        var bottle4 = TestDataBuilder.CreateTestBottle(id: 4, wineId: 4, storageId: 1);
+        bottle4.Consumed = 1;
+
+        _context.Wines.AddRange(wine1, wine2, wine3, wine4);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(bottle1, bottle2, bottle3, bottle4);
+        _context.SaveChanges();
+
+        var result = await _wineService.GetSummary();
+
+        result.UniqueVineyards.Should().Be(2);
+    }
+
+    [Test]
+    public async Task GetSummary_LastConsumed_IsNullWhenNoConsumedBottles()
+    {
+        var wine = TestDataBuilder.CreateTestWine(id: 1);
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+        var bottle = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+
+        _context.Wines.Add(wine);
+        _context.Storages.Add(storage);
+        _context.Bottles.Add(bottle);
+        _context.SaveChanges();
+
+        var result = await _wineService.GetSummary();
+
+        result.LastConsumed.Should().BeNull();
+    }
+
+    [Test]
+    public async Task GetSummary_LastConsumed_ReturnsMostRecentlyConsumedBottle()
+    {
+        var wine1 = TestDataBuilder.CreateTestWine(id: 1, varietal: "Cabernet", vineyard: "Napa", label: "Reserve", vintage: 2018);
+        var wine2 = TestDataBuilder.CreateTestWine(id: 2, varietal: "Merlot", vineyard: "Sonoma", label: "Estate", vintage: 2019);
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+
+        var older = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        older.Consumed = 1;
+        older.ConsumedDate = new DateTime(2024, 1, 1);
+
+        var newer = TestDataBuilder.CreateTestBottle(id: 2, wineId: 2, storageId: 1);
+        newer.Consumed = 1;
+        newer.ConsumedDate = new DateTime(2024, 6, 15);
+
+        _context.Wines.AddRange(wine1, wine2);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(older, newer);
+        _context.SaveChanges();
+
+        var result = await _wineService.GetSummary();
+
+        result.LastConsumed.Should().NotBeNull();
+        result.LastConsumed!.Varietal.Should().Be("Merlot");
+        result.LastConsumed.Vineyard.Should().Be("Sonoma");
+        result.LastConsumed.Label.Should().Be("Estate");
+        result.LastConsumed.Vintage.Should().Be(2019);
+        result.LastConsumed.ConsumedDate.Should().Be(new DateTime(2024, 6, 15));
+    }
+
+    #endregion
+
     #region GetBottles Tests
 
     [Test]

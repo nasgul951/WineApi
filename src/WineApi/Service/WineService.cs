@@ -191,14 +191,14 @@ public class WineService : IWineService
             .FirstAsync();
     }
 
-    public IQueryable<Store> GetStoreResult(int storeId)
+    public IQueryable<StoreCell> GetStoreResult(int storeId)
     {
         Console.WriteLine($"Getting store result for storeId: {storeId}");
         return _db.Bottles
             .Where(b => b.Storageid == storeId)
             .Where(b => b.Consumed == 0)
             .GroupBy(b => new { b.BinY, b.BinX })
-            .Select(g => new Store()
+            .Select(g => new StoreCell()
             {
                 Id = storeId * 1000 + (g.Key.BinX * 100) + g.Key.BinY,
                 BinX = g.Key.BinX,
@@ -207,6 +207,38 @@ public class WineService : IWineService
             })
             .OrderBy(s => s.BinY)
             .ThenBy(s => s.BinX);
+    }
+
+    public async Task<WineSummary> GetSummary()
+    {
+        var unconsumed = _db.Bottles.Where(b => b.Consumed == 0);
+
+        var totalBottles = await unconsumed.CountAsync();
+        var uniqueWines = await unconsumed.Select(b => b.Wineid).Distinct().CountAsync();
+        var uniqueVarietals = await unconsumed.Select(b => b.Wine.Varietal).Distinct().CountAsync();
+        var uniqueVineyards = await unconsumed.Select(b => b.Wine.Vineyard).Distinct().CountAsync();
+
+        var lastConsumed = await _db.Bottles
+            .Where(b => b.Consumed == 1 && b.ConsumedDate != null)
+            .OrderByDescending(b => b.ConsumedDate)
+            .Select(b => new LastConsumedWine
+            {
+                Varietal = b.Wine.Varietal,
+                Vineyard = b.Wine.Vineyard,
+                Label = b.Wine.Label,
+                Vintage = b.Wine.Vintage,
+                ConsumedDate = b.ConsumedDate!.Value
+            })
+            .FirstOrDefaultAsync();
+
+        return new WineSummary
+        {
+            TotalBottles = totalBottles,
+            UniqueWines = uniqueWines,
+            UniqueVarietals = uniqueVarietals,
+            UniqueVineyards = uniqueVineyards,
+            LastConsumed = lastConsumed
+        };
     }
 
     public IQueryable<StoreBottle> GetBottlesByStoreAndBin(int storeId, int binX, int binY)

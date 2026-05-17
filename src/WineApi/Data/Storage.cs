@@ -9,6 +9,16 @@ public partial class Storage
 
     public string? StorageDescription { get; set; }
 
+    public string? Abbreviation { get; set; }
+
+    public int Rows { get; set; }
+
+    public int Columns { get; set; }
+
+    public bool HasTopBin { get; set; }
+
+    public bool HasBottomBin { get; set; }
+
     public string? StorageAddr1 { get; set; }
 
     public string? StorageAddr2 { get; set; }
