@@ -7,6 +7,8 @@ public class Bottle {
     public int BinY { get; set; }
     public int Depth { get; set; }
     public DateTime? CreatedDate { get; set; }
+    public bool Consumed { get; set; }
+    public DateTime? ConsumedDate { get; set; }
 }
 
 public class PutBottle {

@@ -10,7 +10,7 @@ public interface IWineService
     IQueryable<NameSearchResult> GetLabels(string? like, int? limit);
     Task<Wine> AddWine(Wine model);
     Task<Wine> UpdateWine(int id, WinePatchRequest model);
-    IQueryable<Bottle> GetBottles(int? wineId, int? binId);
+    IQueryable<Bottle> GetBottles(int? wineId, bool showConsumed = false);
     Task<Bottle> AddBottle(PutBottle model);
     Task<Bottle> UpdateBottle(int id, PatchBottle model);
     IQueryable<StoreCell> GetStoreResult(int storeId);

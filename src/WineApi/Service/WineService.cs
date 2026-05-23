@@ -137,12 +137,11 @@ public class WineService : IWineService
         return await wines.FirstAsync();
     }
 
-    public IQueryable<Bottle> GetBottles(int? wineId, int? binId)
+    public IQueryable<Bottle> GetBottles(int? wineId, bool showConsumed = false)
     {
         return _db.Bottles
-            .Where(b => b.Consumed == 0)
+            .Where(b => showConsumed || b.Consumed == 0)
             .IfThenWhere(wineId.HasValue, b => b.Wineid == wineId!.Value)
-            //TODO .IfThenWhere(binId.HasValue, b => b.BinX == ? && b.BinY = ?)
             .ToBottleModel();
     }
 
@@ -180,8 +179,19 @@ public class WineService : IWineService
             bottle.BinY = model.BinY.Value;
         if (model.Depth.HasValue)
             bottle.Depth = model.Depth.Value;
-        if (model.Consumed.HasValue)
+        if (model.Consumed.HasValue) {
+            if (model.Consumed.Value && bottle.Consumed == 0)
+            {
+                bottle.ConsumedDate = DateTime.UtcNow;
+            }
+
+            if (!model.Consumed.Value)
+            {
+                bottle.ConsumedDate = null;
+            }
+
             bottle.Consumed = (sbyte)(model.Consumed.Value ? 1 : 0);
+        }
 
         await _db.SaveChangesAsync();
 

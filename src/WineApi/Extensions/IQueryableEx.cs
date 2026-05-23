@@ -81,7 +81,9 @@ namespace WineApi.Extensions
                     BinX = b.BinX,
                     BinY = b.BinY,
                     Depth = b.Depth,
-                    CreatedDate = b.CreatedDate
+                    CreatedDate = b.CreatedDate,
+                    Consumed = b.Consumed == 1,
+                    ConsumedDate = b.ConsumedDate
                 });
         }
 
