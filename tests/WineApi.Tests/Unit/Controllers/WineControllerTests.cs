@@ -241,7 +241,7 @@ public class WineControllerTests
         }.AsQueryable().BuildMock();
 
         _mockWineService
-            .Setup(x => x.GetBottles(1, null))
+            .Setup(x => x.GetBottles(1, false))
             .Returns(bottles);
 
         // Act
@@ -251,6 +251,28 @@ public class WineControllerTests
         result.Should().NotBeNull();
         result.Should().HaveCount(2);
         result.All(b => b.WineId == 1).Should().BeTrue();
+    }
+
+    [Test]
+    public async Task GetBottlesForWine_WithShowConsumedTrue_PassesTrueToService()
+    {
+        // Arrange
+        var bottles = new List<Bottle>
+        {
+            new() { Id = 1, WineId = 1, Consumed = false },
+            new() { Id = 2, WineId = 1, Consumed = true }
+        }.AsQueryable().BuildMock();
+
+        _mockWineService
+            .Setup(x => x.GetBottles(1, true))
+            .Returns(bottles);
+
+        // Act
+        var result = await _controller.GetBottlesForWine(1, showConsumed: true);
+
+        // Assert
+        result.Should().HaveCount(2);
+        _mockWineService.Verify(x => x.GetBottles(1, true), Times.Once);
     }
 
     #endregion

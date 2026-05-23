@@ -783,7 +783,7 @@ public class WineServiceTests
     }
 
     [Test]
-    public async Task UpdateBottle_CanMarkAsConsumed()
+    public async Task UpdateBottle_MarkAsConsumed_SetsConsumedAndConsumedDate()
     {
         // Arrange
         var wine = TestDataBuilder.CreateTestWine(id: 1);
@@ -803,6 +803,86 @@ public class WineServiceTests
         // Assert
         var dbBottle = await _context.Bottles.FindAsync(1);
         dbBottle!.Consumed.Should().Be(1);
+        dbBottle.ConsumedDate.Should().NotBeNull();
+        dbBottle.ConsumedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
+    }
+
+    [Test]
+    public async Task UpdateBottle_MarkAsConsumed_DoesNotOverwriteConsumedDateIfAlreadyConsumed()
+    {
+        // Arrange
+        var wine = TestDataBuilder.CreateTestWine(id: 1);
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+        var bottle = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var originalConsumedDate = new DateTime(2023, 6, 1, 0, 0, 0, DateTimeKind.Utc);
+        bottle.Consumed = 1;
+        bottle.ConsumedDate = originalConsumedDate;
+
+        _context.Wines.Add(wine);
+        _context.Storages.Add(storage);
+        _context.Bottles.Add(bottle);
+        await _context.SaveChangesAsync();
+
+        var updateRequest = new PatchBottle { Consumed = true };
+
+        // Act
+        await _wineService.UpdateBottle(1, updateRequest);
+
+        // Assert
+        var dbBottle = await _context.Bottles.FindAsync(1);
+        dbBottle!.Consumed.Should().Be(1);
+        dbBottle.ConsumedDate.Should().Be(originalConsumedDate);
+    }
+
+    [Test]
+    public async Task UpdateBottle_MarkAsUnconsumed_ClearsConsumedDate()
+    {
+        // Arrange
+        var wine = TestDataBuilder.CreateTestWine(id: 1);
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+        var bottle = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        bottle.Consumed = 1;
+        bottle.ConsumedDate = new DateTime(2023, 6, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        _context.Wines.Add(wine);
+        _context.Storages.Add(storage);
+        _context.Bottles.Add(bottle);
+        await _context.SaveChangesAsync();
+
+        var updateRequest = new PatchBottle { Consumed = false };
+
+        // Act
+        await _wineService.UpdateBottle(1, updateRequest);
+
+        // Assert
+        var dbBottle = await _context.Bottles.FindAsync(1);
+        dbBottle!.Consumed.Should().Be(0);
+        dbBottle.ConsumedDate.Should().BeNull();
+    }
+
+    [Test]
+    public async Task UpdateBottle_ClearConsumedOnAlreadyUnconsumedBottle_ConsumedDateRemainsNull()
+    {
+        // Arrange
+        var wine = TestDataBuilder.CreateTestWine(id: 1);
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+        var bottle = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        // bottle starts unconsumed with no ConsumedDate
+
+        _context.Wines.Add(wine);
+        _context.Storages.Add(storage);
+        _context.Bottles.Add(bottle);
+        await _context.SaveChangesAsync();
+
+        var updateRequest = new PatchBottle { Consumed = false };
+
+        // Act
+        await _wineService.UpdateBottle(1, updateRequest);
+
+        // Assert
+        var dbBottle = await _context.Bottles.FindAsync(1);
+        dbBottle!.Consumed.Should().Be(0);
+        dbBottle.ConsumedDate.Should().BeNull();
     }
 
     #endregion
@@ -988,7 +1068,7 @@ public class WineServiceTests
         _context.SaveChanges();
 
         // Act
-        var result = _wineService.GetBottles(null, null).ToList();
+        var result = _wineService.GetBottles(null, false).ToList();
 
         // Assert
         result.Should().HaveCount(2);
@@ -1012,7 +1092,7 @@ public class WineServiceTests
         _context.SaveChanges();
 
         // Act
-        var result = _wineService.GetBottles(null, null).ToList();
+        var result = _wineService.GetBottles(null, false).ToList();
 
         // Assert
         result.Should().HaveCount(1);
@@ -1039,11 +1119,81 @@ public class WineServiceTests
         _context.SaveChanges();
 
         // Act
-        var result = _wineService.GetBottles(wineId: 1, binId: null).ToList();
+        var result = _wineService.GetBottles(wineId: 1, showConsumed: false).ToList();
 
         // Assert
         result.Should().HaveCount(1);
         result[0].WineId.Should().Be(1);
+    }
+
+    [Test]
+    public void GetBottles_WithShowConsumedTrue_ReturnsAllBottles()
+    {
+        // Arrange
+        var wine = TestDataBuilder.CreateTestWine(id: 1);
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+        var available = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var consumed = TestDataBuilder.CreateTestBottle(id: 2, wineId: 1, storageId: 1);
+        consumed.Consumed = 1;
+
+        _context.Wines.Add(wine);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(available, consumed);
+        _context.SaveChanges();
+
+        // Act
+        var result = _wineService.GetBottles(null, showConsumed: true).ToList();
+
+        // Assert
+        result.Should().HaveCount(2);
+    }
+
+    [Test]
+    public void GetBottles_MapsConsumedFieldCorrectly()
+    {
+        // Arrange
+        var wine = TestDataBuilder.CreateTestWine(id: 1);
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+        var available = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var consumed = TestDataBuilder.CreateTestBottle(id: 2, wineId: 1, storageId: 1);
+        consumed.Consumed = 1;
+
+        _context.Wines.Add(wine);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(available, consumed);
+        _context.SaveChanges();
+
+        // Act
+        var result = _wineService.GetBottles(null, showConsumed: true).ToList();
+
+        // Assert
+        result.Single(b => b.Id == 1).Consumed.Should().BeFalse();
+        result.Single(b => b.Id == 2).Consumed.Should().BeTrue();
+    }
+
+    [Test]
+    public void GetBottles_MapsConsumedDateFieldCorrectly()
+    {
+        // Arrange
+        var expectedDate = new DateTime(2024, 3, 15, 0, 0, 0, DateTimeKind.Utc);
+        var wine = TestDataBuilder.CreateTestWine(id: 1);
+        var storage = TestDataBuilder.CreateTestStorage(id: 1);
+        var available = TestDataBuilder.CreateTestBottle(id: 1, wineId: 1, storageId: 1);
+        var consumed = TestDataBuilder.CreateTestBottle(id: 2, wineId: 1, storageId: 1);
+        consumed.Consumed = 1;
+        consumed.ConsumedDate = expectedDate;
+
+        _context.Wines.Add(wine);
+        _context.Storages.Add(storage);
+        _context.Bottles.AddRange(available, consumed);
+        _context.SaveChanges();
+
+        // Act
+        var result = _wineService.GetBottles(null, showConsumed: true).ToList();
+
+        // Assert
+        result.Single(b => b.Id == 1).ConsumedDate.Should().BeNull();
+        result.Single(b => b.Id == 2).ConsumedDate.Should().Be(expectedDate);
     }
 
     #endregion

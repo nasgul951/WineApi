@@ -77,9 +77,9 @@ public class WineController : ControllerBase
 
     #region Bottles
     [HttpGet("{wineId:int}/bottles")]
-    public async Task<List<Bottle>> GetBottlesForWine(int wineId)
+    public async Task<List<Bottle>> GetBottlesForWine(int wineId, bool showConsumed = false)
     {
-        return await _service.GetBottles(wineId, null).ToListAsync();
+        return await _service.GetBottles(wineId, showConsumed).ToListAsync();
     }
 
     [HttpPost("bottles")]
